@@ -55,7 +55,7 @@ mkdocs-graphviz = "^1.5.3"
 mkdocs-material = "^9.5.6"
 mkdocstrings = "^0.26"
 mkdocstrings-python = "^1.11"
-pydot = "^3.0.0"
+pydot = "^4.0.1"
 
 [tool.ruff]
 line-length = 120
