@@ -37,7 +37,7 @@ social-auth-app-django = "^5.4"
 social-auth-core = "^4.5"
 uvicorn = {version = "^0.27", extras = ["standard"]}
 watchfiles = "^0.24"
-werkzeug = "^3.0"
+werkzeug = "^3.1"
 whitenoise = "^6.6"
 
 [tool.poetry.group.dev.dependencies]
