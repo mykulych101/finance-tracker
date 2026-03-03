@@ -1,0 +1,108 @@
+[tool.poetry]
+authors = ["Your Name <your_email@example.com>"]
+description = "A short description of your project."
+name = "your_project_name"
+version = "0.1.0"
+package-mode = false
+
+[tool.poetry.dependencies]
+celery = "^5.3"
+celery-redbeat = "^2.2"
+cryptography = "^42.0"
+defusedxml = "^0.7"
+django = "^5.1"
+django-anymail = "^10.2"
+django-cors-headers = "^4.4"
+django-extensions = "^3.2"
+djangorestframework = "^3.15"
+djangorestframework-simplejwt = "^5.3"
+drf-spectacular = "^0.27"
+gunicorn = "^21.2"
+oauthlib = "^3.2"
+pillow = "^10.2"
+psycopg2 = "^2.9"
+pydantic = "^2.5"
+pyjwt = "^2.8"
+pyopenssl = "^24.0"
+python = "^3.10"
+python-dateutil = "^2.8"
+python-decouple = "^3.8"
+python-dotenv = "^1.0"
+python-jose = "^3.3"
+redis = "^5.0"
+requests = "^2.31"
+sentry-sdk = "^1.39"
+shortuuid = "^1.0"
+social-auth-app-django = "^5.4"
+social-auth-core = "^4.5"
+uvicorn = {version = "^0.27", extras = ["standard"]}
+watchfiles = "^0.24"
+werkzeug = "^3.0"
+whitenoise = "^6.6"
+
+[tool.poetry.group.dev.dependencies]
+django-debug-toolbar = "^4.2"
+freezegun = "^1.4"
+markdown-urlize = "^0.2"
+pytest = "^7.4"
+pytest-django = "^4.11.0"
+ruff = "^0.6.7"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6"
+mkdocs-awesome-pages-plugin = "^2.9.2"
+mkdocs-graphviz = "^1.5.3"
+mkdocs-material = "^9.5.6"
+mkdocstrings = "^0.26"
+mkdocstrings-python = "^1.11"
+pydot = "^3.0.0"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+exclude = [
+  "migrations",
+]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "D",      # docstring rules
+  "ANN",    # type annotations
+  "EM101",  # string literal in exception
+  "TRY003", # long exception messages
+  "FBT002", # boolean default in function args
+  "FBT003", # boolean positional value
+  "RUF012", # mutable class attributes need ClassVar
+  "B904",   # raise from within except
+  "PIE804", # unnecessary dict kwargs
+  "COM812", # missing trailing comma
+  "ISC001", # implicit string concat
+  "S308",   # mark_safe
+  "G004",   # f-string in logging
+  "PTH123", # open() vs Path()
+  "ARG002", # unused method argument
+  "PLC0415", # import not at top level
+]
+pydocstyle = { convention = "google" }
+mccabe = { max-complexity = 14 }
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/*.py" = ["F403", "F405", "E402", "INP001", "ERA001", "PTH118", "ARG005"]
+"*/tests/*.py" = ["S106", "TID252", "PT027", "S101", "PT009"]
+"*/api/tests.py" = ["S106", "S101", "PT009"]
+"core/middleware.py" = ["S101"]
+"config/urls.py" = ["ERA001"]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]

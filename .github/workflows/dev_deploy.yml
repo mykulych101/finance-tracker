@@ -1,0 +1,20 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: dev
+      branch: develop
+      compose-file: compose.dev.yml
+    secrets:
+      host: ${{ secrets.DEV_HOST }}
+      ssh-key: ${{ secrets.DEV_SSH_KEY }}
+      username: ${{ secrets.DEV_SSH_USER }}
+
+  # Note: Migrations are handled automatically by the deploy script

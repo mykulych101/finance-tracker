@@ -1,0 +1,137 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+PORT="${APP_PORT:-8000}"
+
+# Fix permissions on mounted volumes (running as root)
+# Only fix top-level directories, not recursive — /data can grow large with media/static
+if [ "$(id -u)" = "0" ]; then
+    mkdir -p /data/staticfiles /data/media
+    chown -R appuser:appuser /data/staticfiles
+    chown appuser:appuser /data /data/media
+    chmod 775 /data
+    chmod g+s /data
+
+    chown -R appuser:appuser /opt/project/src/.pytest_cache 2>/dev/null || true
+fi
+
+if [ -z "${POSTGRES_USER}" ]; then
+    base_postgres_image_default_user='postgres'
+    export POSTGRES_USER="${base_postgres_image_default_user}"
+fi
+
+exitFunc() {
+  echo 'Exiting...'
+  exit 1
+}
+
+postgres_ready() {
+gosu appuser poetry run python << END
+import sys
+import psycopg2
+try:
+    psycopg2.connect(
+        dbname="${POSTGRES_DB}",
+        user="${POSTGRES_USER}",
+        password="${POSTGRES_PASSWORD}",
+        host="${POSTGRES_HOST}",
+        port="${POSTGRES_PORT}",
+    )
+except psycopg2.OperationalError:
+    sys.exit(-1)
+sys.exit(0)
+END
+}
+
+wait_for_postgres() {
+count=0
+trap exitFunc INT
+echo "Checking the PostgreSQL connection"
+until postgres_ready; do
+  count=$((count+1))
+  if [ $count -eq 10 ]; then
+      >&2 echo 'A waiting time has been reached. Exiting...'
+      exit 1
+  fi
+  >&2 echo 'Waiting for PostgreSQL to become available...'
+  sleep 2
+done
+>&2 echo 'PostgreSQL is available'
+}
+
+show_help() {
+    echo """
+Usage: docker-compose -f <yaml-file> run <service> COMMAND
+Commands
+prod     : Start django using a prod ready gunicorn server
+dev       : Start a normal Django development server
+bash      : Start a bash shell
+manage    : Start manage.py
+python    : Run a python command
+shell     : Start a Django Python shell
+add       : Add package via Poetry
+celery    : Run celery
+celery-dev: Run a hot-reloading dev version of celery
+help      : Show this message
+"""
+}
+
+run_setup_commands(){
+  gosu appuser poetry run python manage.py collectstatic --noinput
+  gosu appuser poetry run python manage.py migrate
+}
+
+case "$1" in
+    dev)
+        wait_for_postgres
+        gosu appuser poetry run python manage.py migrate
+        exec gosu appuser poetry run python manage.py runserver 0.0.0.0:"${PORT}"
+    ;;
+    prod)
+        wait_for_postgres
+        run_setup_commands
+        exec gosu appuser poetry run gunicorn config.wsgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src
+    ;;
+    bash)
+        exec gosu appuser /bin/bash "${@:2}"
+    ;;
+    add)
+      # Usage: docker-compose run web add django-environ@^0.11
+      # Everything after "add" is passed straight to Poetry.
+      exec gosu appuser poetry add "${@:2}"
+    ;;
+    manage)
+        exec gosu appuser poetry run python manage.py "${@:2}"
+    ;;
+    python)
+        exec gosu appuser poetry run python "${@:2}"
+    ;;
+    shell)
+        exec gosu appuser poetry run python manage.py shell
+    ;;
+    celery)
+        wait_for_postgres
+        exec gosu appuser poetry run celery -A config "${@:2}"
+    ;;
+    celery-dev)
+        wait_for_postgres
+        if [ "$2" = "worker" ]; then
+            exec gosu appuser poetry run watchfiles celery.__main__.main --args "-A config worker ${*:3}"
+        elif [ "$2" = "beat" ]; then
+            exec gosu appuser poetry run watchfiles celery.__main__.main --args "-A config beat ${*:3}"
+        else
+            exec gosu appuser poetry run watchfiles celery.__main__.main --args "-A config ${*:2}"
+        fi
+    ;;
+    test)
+        export DJANGO_SETTINGS_MODULE=config.settings.test
+        exec gosu appuser poetry run pytest
+    ;;
+    *)
+        show_help
+        exit 1
+    ;;
+esac

@@ -1,0 +1,127 @@
+x-django-common: &django-common
+  restart: always
+  image: "${COMPOSE_PROJECT_NAME}_prod"
+  depends_on:
+    - postgres
+    - redis
+  volumes:
+    - static:/data/staticfiles/
+    - media:/data/media/
+  env_file:
+    - ./.env
+  logging:
+    driver: journald
+    options:
+      tag: "{{.Name}}"
+
+services:
+  django:
+    <<: *django-common
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+      args:
+        ENVIRONMENT: production
+    command: prod
+  celeryworker:
+    <<: *django-common
+    depends_on:
+      - django
+      - postgres
+      - redis
+    command: celery worker -l INFO
+  celerybeat:
+    <<: *django-common
+    depends_on:
+      - django
+      - postgres
+      - redis
+    command: celery beat -l INFO
+  flower:
+    image: mher/flower:0.9.7
+    command: "flower --broker=${REDIS_URL} --port=5555 --url-prefix=flower --basic_auth=${CELERY_FLOWER_USER}:${CELERY_FLOWER_PASSWORD}"
+    depends_on:
+      - redis
+    env_file:
+      - ./.env
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+    image: "${COMPOSE_PROJECT_NAME}_prod_postgres"
+    restart: always
+    volumes:
+      - prod_postgres:/var/lib/postgresql/data:Z
+      - prod_backups:/backups:z
+    env_file:
+      - ./.env
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
+  redis:
+    image: redis:6.0
+    restart: always
+    volumes:
+      - prod_redis:/data
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
+  mkdocs:
+    build:
+      dockerfile: ./docker/mkdocs/Dockerfile
+      context: ./
+    env_file:
+      - .env
+    image: ${COMPOSE_PROJECT_NAME}/docs
+    container_name: ${COMPOSE_PROJECT_NAME}-docs-prod
+    command:
+      - build
+    volumes:
+      - ./docs:/docs
+      - docs:/data
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
+  caddy:
+    build:
+      context: .
+      dockerfile: ./docker/caddy/Dockerfile
+    image: "${COMPOSE_PROJECT_NAME}_prod_caddy"
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - prod_caddy:/data
+      - static:/static:ro
+      - media:/media:ro
+      - docs:/docs
+      - caddy_config:/config
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /var/log/caddy:/var/log/caddy
+    env_file:
+      - ./.env
+    depends_on:
+      - django
+      - flower
+    logging:
+      driver: journald
+      options:
+        tag: "{{.Name}}"
+
+volumes:
+  prod_postgres:
+  prod_backups:
+  prod_caddy:
+  prod_redis:
+  media:
+  static:
+  caddy_config:
+  docs:
