@@ -12,9 +12,9 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from accounts.models import User
-from accounts.tasks import send_email
-from accounts.utils import account_activation_token
+from users.models import User
+from users.tasks import send_email
+from users.utils import account_activation_token
 
 from .serializers import ChangePasswordSerializer, MyTokenObtainPairSerializer, UserProfileSerializer, UserSerializer
 

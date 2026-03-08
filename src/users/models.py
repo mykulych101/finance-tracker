@@ -66,7 +66,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         _("active"),
         default=True,
         help_text=_(
-            "Designates whether this user should be treated as active. Unselect this instead of deleting accounts."
+            "Designates whether this user should be treated as active. Unselect this instead of deleting users."
         ),
     )
     is_verified = models.BooleanField("Email verified", default=False)

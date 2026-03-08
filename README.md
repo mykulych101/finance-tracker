@@ -11,7 +11,7 @@ Download the last version of the boiler plate from the repository: https://githu
 
 You can download the ZIP archive and unpack it to the directory, or clone the repository (but do not forget to clean the Git history in that case).
 
-Use the global find and replace for changing the string `NEWPROJECTNAME` in the files in the `src` directory to the proper project name. The easiest way to do it just use `Replace` feature in the IDE.
+Use the global find and replace for changing the string `FINANCETRACKER` in the files in the `src` directory to the proper project name. The easiest way to do it just use `Replace` feature in the IDE.
 
 There are three files where the changes should be done:
 

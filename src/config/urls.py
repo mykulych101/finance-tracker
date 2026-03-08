@@ -8,7 +8,7 @@ from drf_spectacular.views import (
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-admin.site.site_header = "NEWPROJECTNAME | Admin console"
+admin.site.site_header = "FINANCETRACKER | Admin console"
 # admin.site.enable_nav_sidebar = False
 
 
@@ -23,7 +23,7 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     # Redoc UI
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    path("", include("accounts.urls")),
+    path("", include("users.urls")),
     path("", include("core.urls")),
 ]
 

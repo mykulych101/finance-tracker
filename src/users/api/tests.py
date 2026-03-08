@@ -2,13 +2,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from accounts.models import User
+from users.models import User
 
 
 class UserProfileTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="testuser@example.com", password="testpass123", name="Test User")
-        self.url = reverse("accounts_api:profile")
+        self.url = reverse("users_api:profile")
         self.client.force_authenticate(user=self.user)
 
     def test_retrieve_profile(self):
