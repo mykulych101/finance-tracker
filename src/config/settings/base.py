@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # Add the apps here
     "core",
     "users",
+    "accounts",
 ]
 
 if SENTRY_DSN and SENTRY_DSN.strip() and SENTRY_DSN.strip().startswith(("http://", "https://")):
@@ -180,6 +181,8 @@ CACHES = {
 
 # Configure REST framework
 REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "core.paginators.ResultSetPagination",
+    "PAGE_SIZE": 10,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
 }
