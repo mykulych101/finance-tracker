@@ -1,0 +1,380 @@
+[
+    {
+        "url": "/superadmin/doc/",
+        "module": "django.contrib.admindocs.views.BaseAdminDocsView",
+        "name": "django-admindocs-docroot",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/bookmarklets/",
+        "module": "django.contrib.admindocs.views.BookmarkletsView",
+        "name": "django-admindocs-bookmarklets",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/tags/",
+        "module": "django.contrib.admindocs.views.TemplateTagIndexView",
+        "name": "django-admindocs-tags",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/filters/",
+        "module": "django.contrib.admindocs.views.TemplateFilterIndexView",
+        "name": "django-admindocs-filters",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/views/",
+        "module": "django.contrib.admindocs.views.ViewIndexView",
+        "name": "django-admindocs-views-index",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/views/<view>/",
+        "module": "django.contrib.admindocs.views.ViewDetailView",
+        "name": "django-admindocs-views-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/models/",
+        "module": "django.contrib.admindocs.views.ModelIndexView",
+        "name": "django-admindocs-models-index",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/models/<app_label>\\.<model_name>/",
+        "module": "django.contrib.admindocs.views.ModelDetailView",
+        "name": "django-admindocs-models-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/doc/templates/<path:template>/",
+        "module": "django.contrib.admindocs.views.TemplateDetailView",
+        "name": "django-admindocs-templates",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/",
+        "module": "django.contrib.admin.sites.index",
+        "name": "admin:index",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/login/",
+        "module": "django.contrib.admin.sites.login",
+        "name": "admin:login",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/logout/",
+        "module": "django.contrib.admin.sites.logout",
+        "name": "admin:logout",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/password_change/",
+        "module": "django.contrib.admin.sites.password_change",
+        "name": "admin:password_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/password_change/done/",
+        "module": "django.contrib.admin.sites.password_change_done",
+        "name": "admin:password_change_done",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/autocomplete/",
+        "module": "django.contrib.admin.sites.autocomplete_view",
+        "name": "admin:autocomplete",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/jsi18n/",
+        "module": "django.contrib.admin.sites.i18n_javascript",
+        "name": "admin:jsi18n",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/r/<path:content_type_id>/<path:object_id>/",
+        "module": "django.contrib.contenttypes.views.shortcut",
+        "name": "admin:view_on_site",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/auth/group/",
+        "module": "django.contrib.admin.options.changelist_view",
+        "name": "admin:auth_group_changelist",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/auth/group/add/",
+        "module": "django.contrib.admin.options.add_view",
+        "name": "admin:auth_group_add",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/auth/group/<path:object_id>/history/",
+        "module": "django.contrib.admin.options.history_view",
+        "name": "admin:auth_group_history",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/auth/group/<path:object_id>/delete/",
+        "module": "django.contrib.admin.options.delete_view",
+        "name": "admin:auth_group_delete",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/auth/group/<path:object_id>/change/",
+        "module": "django.contrib.admin.options.change_view",
+        "name": "admin:auth_group_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/auth/group/<path:object_id>/",
+        "module": "django.views.generic.base.RedirectView",
+        "name": "",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/<var>/change/password/",
+        "module": "django.contrib.auth.admin.user_change_password",
+        "name": "admin:auth_user_password_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/<id>/password/",
+        "module": "django.contrib.auth.admin.user_change_password",
+        "name": "admin:auth_user_password_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/",
+        "module": "django.contrib.admin.options.changelist_view",
+        "name": "admin:users_user_changelist",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/add/",
+        "module": "django.contrib.auth.admin.add_view",
+        "name": "admin:users_user_add",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/<path:object_id>/history/",
+        "module": "django.contrib.admin.options.history_view",
+        "name": "admin:users_user_history",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/<path:object_id>/delete/",
+        "module": "django.contrib.admin.options.delete_view",
+        "name": "admin:users_user_delete",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/<path:object_id>/change/",
+        "module": "django.contrib.admin.options.change_view",
+        "name": "admin:users_user_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/users/user/<path:object_id>/",
+        "module": "django.views.generic.base.RedirectView",
+        "name": "",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/accounts/account/",
+        "module": "django.contrib.admin.options.changelist_view",
+        "name": "admin:accounts_account_changelist",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/accounts/account/add/",
+        "module": "django.contrib.admin.options.add_view",
+        "name": "admin:accounts_account_add",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/accounts/account/<path:object_id>/history/",
+        "module": "django.contrib.admin.options.history_view",
+        "name": "admin:accounts_account_history",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/accounts/account/<path:object_id>/delete/",
+        "module": "django.contrib.admin.options.delete_view",
+        "name": "admin:accounts_account_delete",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/accounts/account/<path:object_id>/change/",
+        "module": "django.contrib.admin.options.change_view",
+        "name": "admin:accounts_account_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/accounts/account/<path:object_id>/",
+        "module": "django.views.generic.base.RedirectView",
+        "name": "",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/<app_label>/",
+        "module": "django.contrib.admin.sites.app_index",
+        "name": "admin:app_list",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/<url>",
+        "module": "django.contrib.admin.sites.catch_all_view",
+        "name": "",
+        "decorators": ""
+    },
+    {
+        "url": "/api/token/",
+        "module": "rest_framework_simplejwt.views.TokenObtainPairView",
+        "name": "token_obtain_pair",
+        "decorators": ""
+    },
+    {
+        "url": "/api/token/refresh/",
+        "module": "rest_framework_simplejwt.views.TokenRefreshView",
+        "name": "token_refresh",
+        "decorators": ""
+    },
+    {
+        "url": "/api/schema/",
+        "module": "drf_spectacular.views.SpectacularAPIView",
+        "name": "schema",
+        "decorators": ""
+    },
+    {
+        "url": "/api/docs/",
+        "module": "drf_spectacular.views.SpectacularSwaggerView",
+        "name": "swagger-ui",
+        "decorators": ""
+    },
+    {
+        "url": "/api/redoc/",
+        "module": "drf_spectacular.views.SpectacularRedocView",
+        "name": "redoc",
+        "decorators": ""
+    },
+    {
+        "url": "/api/register/",
+        "module": "users.api.views.RegisterView",
+        "name": "users_api:register",
+        "decorators": ""
+    },
+    {
+        "url": "/api/login/",
+        "module": "users.api.views.LoginView",
+        "name": "users_api:login",
+        "decorators": ""
+    },
+    {
+        "url": "/api/logout/",
+        "module": "users.api.views.LogoutView",
+        "name": "users_api:logout",
+        "decorators": ""
+    },
+    {
+        "url": "/api/change-password/",
+        "module": "users.api.views.ChangePasswordView",
+        "name": "users_api:change-password",
+        "decorators": ""
+    },
+    {
+        "url": "/api/profile/",
+        "module": "users.api.views.UserProfileView",
+        "name": "users_api:profile",
+        "decorators": ""
+    },
+    {
+        "url": "/api/activate/<uidb64>/<token>/",
+        "module": "users.api.views.ActivateAccountView",
+        "name": "users_api:activate",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts\\.<format>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/<pk>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/<pk>\\.<format>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/api/<drf_format_suffix:format>",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/render_panel/",
+        "module": "debug_toolbar.views.render_panel",
+        "name": "djdt:render_panel",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/history_sidebar/",
+        "module": "debug_toolbar.panels.history.views.history_sidebar",
+        "name": "djdt:history_sidebar",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/history_refresh/",
+        "module": "debug_toolbar.panels.history.views.history_refresh",
+        "name": "djdt:history_refresh",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/sql_select/",
+        "module": "debug_toolbar.panels.sql.views.sql_select",
+        "name": "djdt:sql_select",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/sql_explain/",
+        "module": "debug_toolbar.panels.sql.views.sql_explain",
+        "name": "djdt:sql_explain",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/sql_profile/",
+        "module": "debug_toolbar.panels.sql.views.sql_profile",
+        "name": "djdt:sql_profile",
+        "decorators": ""
+    },
+    {
+        "url": "/__debug__/template_source/",
+        "module": "debug_toolbar.panels.templates.views.template_source",
+        "name": "djdt:template_source",
+        "decorators": ""
+    }
+]

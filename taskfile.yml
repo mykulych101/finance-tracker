@@ -19,3 +19,8 @@ tasks:
     desc: "Stop dev dependencies"
     cmds:
       - docker compose -f compose.dev.yml down
+  dev.api:
+    desc: "Generate API specification from BE"
+    dir: src
+    cmds:
+      - poetry run python manage.py show_urls --format=pretty-json > ../docs/urls.json
