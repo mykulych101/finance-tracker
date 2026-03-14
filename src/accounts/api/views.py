@@ -12,8 +12,12 @@ class AccountViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Account.objects.filter(user=self.request.user)
+        return Account.objects.filter(user=self.request.user, is_active=True)
 
     def create(self, request, *args, **kwargs):
         super().create(request, *args, **kwargs)
         return Response(status=status.HTTP_201_CREATED)
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.save(update_fields=["is_active"])

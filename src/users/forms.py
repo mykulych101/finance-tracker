@@ -137,7 +137,7 @@ class UserPasswordSetupForm(forms.Form):
 class UserAuthForm(AuthenticationForm):
     error_messages = {
         "invalid_login": _(
-            "Please enter correct email address and password. " "Note that both fields are case-sensitive."
+            "Please enter correct email address and password. Note that both fields are case-sensitive."
         ),
         "inactive": _("This account is inactive."),
     }

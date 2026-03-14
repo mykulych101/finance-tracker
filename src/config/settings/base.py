@@ -181,7 +181,7 @@ CACHES = {
 
 # Configure REST framework
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "core.paginators.ResultSetPagination",
+    "DEFAULT_PAGINATION_CLASS": "core.api.paginators.ResultSetPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),

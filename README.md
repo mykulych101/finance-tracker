@@ -23,12 +23,12 @@ src/config/urls.py
 
 ## 🐳 Install Docker and Docker Compose
 
-For the local computer we recommend using Docker Desktop. 
+For the local computer we recommend using Docker Desktop.
 You can download it from the official site: https://www.docker.com/products/docker-desktop
 
 There are versions for Windows, Linux and Mac OS.
 
-For the server installation you need the Docker Engine and Docker Compose. 
+For the server installation you need the Docker Engine and Docker Compose.
 Use the following commands to install Docker on Ubuntu Linux:
 
 ```shell
