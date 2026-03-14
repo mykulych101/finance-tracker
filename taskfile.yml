@@ -10,10 +10,15 @@ tasks:
     cmds:
       - echo "{{.GREETING}}"
     silent: true
+  dev.manage:
+    desc: "Run Django management commands"
+    dir: backend
+    cmds:
+      - poetry run python manage.py {{.CLI_ARGS}}
   dev.up:
     desc: "Start dev dependencies"
     cmds:
-      - docker compose -f compose.dev.yml up -d postgres redis
+      - docker compose -f compose.dev.yml up django postgres redis --wait
       - docker compose -f compose.dev.yml exec -it redis redis-cli FLUSHALL
   dev.down:
     desc: "Stop dev dependencies"
