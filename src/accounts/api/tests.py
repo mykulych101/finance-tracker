@@ -1,25 +1,49 @@
 from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase
 
-from accounts.models import User
+from accounts.api.factories import AccountFactory
+from accounts.constants import AccountCategory, AccountCurrency, AccountType
+from accounts.models import Account
+from core.tests import BaseAPITest
 
 
-class UserProfileTests(APITestCase):
+class AccountTests(BaseAPITest):
     def setUp(self):
-        self.user = User.objects.create_user(email="testuser@example.com", password="testpass123", name="Test User")
-        self.url = reverse("accounts_api:profile")
-        self.client.force_authenticate(user=self.user)
+        self.user = self.create_and_login()
 
-    def test_retrieve_profile(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["email"], self.user.email)
-        self.assertEqual(response.data["name"], self.user.name)
+    def test_retrieve_accounts(self):
+        accounts_count = 5
+        AccountFactory.create_batch(accounts_count, user=self.user)
+        url = reverse("account-list")
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], accounts_count)
+        required_fields = {"id", "name", "type", "category", "currency", "is_active", "created_at", "updated_at"}
+        for field in required_fields:
+            self.assertIn(field, resp.data["results"][0])
 
-    def test_update_profile(self):
-        data = {"name": "Updated Name"}
-        response = self.client.put(self.url, data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.name, "Updated Name")
+    def test_create_account(self):
+        url = reverse("account-list")
+        data = {
+            "name": "Test Account",
+            "type": AccountType.ASSET,
+            "category": AccountCategory.CASH,
+            "currency": AccountCurrency.USD,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 201)
+        account = Account.objects.get(name=data["name"], user=self.user)
+        self.assertEqual(account.type, data["type"])
+        self.assertEqual(account.category, data["category"])
+        self.assertEqual(account.currency, data["currency"])
+
+    def test_create_duplicate_account_name(self):
+        existing_account = AccountFactory.create(name="Existing", user=self.user)
+        url = reverse("account-list")
+        data = {
+            "name": existing_account.name,
+            "type": AccountType.ASSET,
+            "category": AccountCategory.CASH,
+            "currency": AccountCurrency.USD,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 400)

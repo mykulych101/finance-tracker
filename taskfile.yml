@@ -1,0 +1,26 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+  dev.up:
+    desc: "Start dev dependencies"
+    cmds:
+      - docker compose -f compose.dev.yml up -d postgres redis
+      - docker compose -f compose.dev.yml exec -it redis redis-cli FLUSHALL
+  dev.down:
+    desc: "Stop dev dependencies"
+    cmds:
+      - docker compose -f compose.dev.yml down
+  dev.api:
+    desc: "Generate API specification from BE"
+    dir: src
+    cmds:
+      - poetry run python manage.py show_urls --format=pretty-json > ../docs/urls.json

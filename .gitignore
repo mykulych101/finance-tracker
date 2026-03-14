@@ -14,7 +14,7 @@ __pycache__
 /tmp
 .coverage
 /.idea
-/.vscode
+# /.vscode
 /src/htmlcov
 /src/celerybeat-schedule*
 /.env*

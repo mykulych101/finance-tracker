@@ -1,7 +1,7 @@
 [tool.poetry]
 authors = ["Your Name <your_email@example.com>"]
 description = "A short description of your project."
-name = "your_project_name"
+name = "finance_tracker"
 version = "0.1.0"
 package-mode = false
 
@@ -102,6 +102,11 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+python_files = ["test_*.py", "tests.py"]
 
 [build-system]
 build-backend = "poetry.core.masonry.api"

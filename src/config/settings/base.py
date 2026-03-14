@@ -7,7 +7,7 @@ from decouple import Csv, config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parents[2]  # /src
 ROOT_DIR = BASE_DIR.parent  # /
-PROJECT_NAME = config("PROJECT_NAME", default="NEWPROJECTNAME")
+PROJECT_NAME = config("PROJECT_NAME", default="FINANCETRACKER")
 
 
 SECRET_KEY = config("SECRET_KEY")
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django_extensions",
     # Add the apps here
     "core",
+    "users",
     "accounts",
 ]
 
@@ -113,7 +114,7 @@ DATABASES = {
     },
 }
 
-AUTH_USER_MODEL = "accounts.User"
+AUTH_USER_MODEL = "users.User"
 AUTH_PASSWORD_VALIDATORS = []
 
 
@@ -152,7 +153,7 @@ CELERY_BEAT_SCHEDULER = "redbeat.RedBeatScheduler"
 CELERY_BEAT_SCHEDULE = {}
 
 
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@NEWPROJECTNAME.com")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@FINANCETRACKER.com")
 EMAIL_BCC_ADDRESSES = config("EMAIL_BCC_ADDRESSES", default="", cast=Csv())
 
 USE_HTTPS = False
@@ -180,6 +181,8 @@ CACHES = {
 
 # Configure REST framework
 REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "core.paginators.ResultSetPagination",
+    "PAGE_SIZE": 10,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
 }

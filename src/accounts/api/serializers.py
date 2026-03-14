@@ -1,54 +1,20 @@
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from accounts.models import User
+from accounts.models import Account
 
 
-class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        min_length=9,
-        max_length=20,
-        write_only=True,
-        error_messages={
-            "blank": "Password field may not be blank.",
-            "max_length": "Ensure password field has no more than {max_length} characters.",
-            "min_length": "Ensure password field has at least {min_length} characters.",
-        },
-    )
-
-    def validate(self, attrs):
-        """Validate password for registration"""
-        validate_password(attrs["password"])
-        return attrs
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ("id", "name", "type", "category", "currency", "is_active", "created_at", "updated_at")
+        read_only_fields = ["id", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        return User.objects.create_user(
-            name=validated_data["name"], password=validated_data["password"], email=validated_data.get("email", "")
-        )
+        user = self.context["request"].user
+        return Account.objects.create(user=user, **validated_data)
 
-    class Meta:
-        model = User
-        fields = ("id", "name", "password", "email")
-
-
-class ChangePasswordSerializer(serializers.Serializer):
-    model = User
-
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ("email", "name")
-        read_only_fields = ("email",)
-
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        if not self.user.is_verified:
-            raise serializers.ValidationError("Email is not verified.")
-        return data
+    def validate_name(self, value):
+        user = self.context["request"].user
+        if Account.objects.filter(user=user, name=value).exists():
+            raise serializers.ValidationError("You already have an account with this name.")
+        return value
