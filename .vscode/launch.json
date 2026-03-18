@@ -1,0 +1,47 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"args": ["runserver", "--noreload"],
+			"autoStartBrowser": false,
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}/src",
+			"django": true,
+			"envFile": "${workspaceFolder}/.env",
+			"justMyCode": false,
+			"name": "be sync",
+			"program": "${workspaceFolder}/src/manage.py",
+			// "python": "${workspaceFolder}/src/.venv/bin/python",
+			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"request": "launch",
+			"type": "debugpy"
+		},
+		{
+			"args": ["-A", "core", "beat", "-l", "INFO"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}/src",
+			"django": true,
+			"envFile": "${workspaceFolder}/.env",
+			"justMyCode": true,
+			"module": "celery",
+			"name": "celery beat",
+			// "python": "${workspaceFolder}/src/.venv/bin/python",
+			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"request": "launch",
+			"type": "debugpy"
+		},
+		{
+			"args": ["-A", "core", "worker", "-l", "INFO", "-Q", "django"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}/src",
+			"envFile": "${workspaceFolder}/.env",
+			"justMyCode": true,
+			"module": "celery",
+			"name": "celery worker",
+			// "python": "${workspaceFolder}/src/.venv/bin/python",
+			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"request": "launch",
+			"type": "debugpy"
+		}
+	]
+}
