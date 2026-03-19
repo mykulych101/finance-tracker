@@ -194,6 +194,45 @@ access rights.
 > debugger. Anyway you can just use `docker compose -f compose.dev.yml up -d`
 > in the terminal.
 
+## 🛠 Dev Services
+
+The following auxiliary services are started as part of `compose.dev.yml` and are available during local development.
+
+### Celery Worker
+
+The Celery worker processes background tasks such as sending emails. It listens on the `django` queue and is configured via `celeryworker` in `compose.dev.yml`. You can also run it locally:
+
+```shell
+$ task dev.worker
+```
+
+### Celery Beat
+
+Celery Beat is the task scheduler — it triggers periodic tasks defined in `CELERY_BEAT_SCHEDULE`. Run it locally with:
+
+```shell
+$ task dev.beat
+```
+
+### MailHog
+
+[MailHog](https://github.com/mailhog/mailhog) is a fake SMTP server that catches all outgoing emails instead of delivering them. Useful for inspecting emails (e.g. account activation links) without needing a real email provider configured.
+
+- **Web UI:** http://localhost:8025
+- Configured via `EMAIL_HOST=mailhog` and `EMAIL_PORT=1025` in `.env`
+
+### Flower
+
+[Flower](https://flower.readthedocs.io/) is a real-time web UI for monitoring Celery workers and tasks. It shows active, pending, and completed tasks, worker status, task arguments, results, and errors.
+
+- **Web UI:** http://localhost:5555/flower
+
+### MkDocs
+
+[MkDocs](https://www.mkdocs.org/) serves the project documentation as a live-reloading site from the `./docs` folder.
+
+- **Web UI:** http://localhost:8050
+
 ## Deploying the project to the server
 
 - [Automated provisioning with Ansible](docs/deployment_automated.md)

@@ -31,13 +31,26 @@
 			"type": "debugpy"
 		},
 		{
-			"args": ["-A", "core", "worker", "-l", "INFO", "-Q", "django"],
+			"args": ["-A", "core", "worker", "-l", "INFO", "-Q", "django,celery", "--pool=solo"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}/src",
 			"envFile": "${workspaceFolder}/.env",
 			"justMyCode": true,
 			"module": "celery",
 			"name": "celery worker",
+			// "python": "${workspaceFolder}/src/.venv/bin/python",
+			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"request": "launch",
+			"type": "debugpy"
+		},
+		{
+			"args": ["-A", "core", "flower", "--broker=redis://localhost:6379/0", "--port=5555"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}/src",
+			"envFile": "${workspaceFolder}/.env",
+			"justMyCode": true,
+			"module": "celery",
+			"name": "flower",
 			// "python": "${workspaceFolder}/src/.venv/bin/python",
 			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
 			"request": "launch",

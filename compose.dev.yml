@@ -61,6 +61,8 @@ services:
       - ./.env
   redis:
     image: redis:6.0
+    ports:
+      - "6379:6379"
     volumes:
       - dev_redis:/data
   postgres:
@@ -80,6 +82,7 @@ services:
     logging:
       driver: 'none'
     ports:
+      - "1025:1025"
       - "8025:8025"
   mkdocs:
     build:
