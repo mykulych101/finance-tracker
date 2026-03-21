@@ -81,5 +81,3 @@ create_env_template: true
 # ============================================================================
 deploy_app: false  # Set to true to deploy app during provisioning (requires git_repo_url)
 auto_reboot: false  # Automatically reboot after kernel updates (use with caution)
-
-

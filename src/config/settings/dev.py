@@ -7,6 +7,7 @@ MIDDLEWARE += [
 ]
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda _: True,
+    "IS_RUNNING_TESTS": False,
 }
 
 INSTALLED_APPS += [

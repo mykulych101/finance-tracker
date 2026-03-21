@@ -10,17 +10,32 @@ tasks:
     cmds:
       - echo "{{.GREETING}}"
     silent: true
+  dev.manage:
+    desc: "Run Django management commands"
+    dir: backend
+    cmds:
+      - poetry run python manage.py {{.CLI_ARGS}}
   dev.up:
     desc: "Start dev dependencies"
     cmds:
-      - docker compose -f compose.dev.yml up -d postgres redis
+      - docker compose -f compose.dev.yml up postgres redis mailhog --wait
       - docker compose -f compose.dev.yml exec -it redis redis-cli FLUSHALL
   dev.down:
     desc: "Stop dev dependencies"
     cmds:
-      - docker compose -f compose.dev.yml down
+      - docker compose -f compose.dev.yml down --remove-orphans
   dev.api:
     desc: "Generate API specification from BE"
     dir: src
     cmds:
       - poetry run python manage.py show_urls --format=pretty-json > ../docs/urls.json
+  dev.coverage:
+    env:
+      DISABLE_EXTERNAL_API_CALLS: "1"
+      DJANGO_SETTINGS_MODULE: "config.settings.test"
+    dir: src
+    cmds:
+      - poetry run coverage run manage.py test -b
+      - poetry run coverage report -m
+      - poetry run coverage xml
+      - poetry run genbadge coverage -i coverage.xml -o ../docs/coverage.svg

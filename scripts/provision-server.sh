@@ -102,7 +102,7 @@ if [ -z "$GIT_REPO_URL" ] && git remote get-url origin &>/dev/null; then
     ORIGIN_URL=$(git remote get-url origin 2>/dev/null)
     REPO_PATH=""
     GIT_HOST=""
-    
+
     # Parse various Git URL formats to extract repository path and host
     if [[ "$ORIGIN_URL" =~ ^git@([^:]+):(.+)$ ]]; then
         # SSH format: git@github.com:user/repo.git
@@ -118,7 +118,7 @@ if [ -z "$GIT_REPO_URL" ] && git remote get-url origin &>/dev/null; then
         GIT_HOST="${BASH_REMATCH[1]}"
         REPO_PATH="${BASH_REMATCH[2]}"
     fi
-    
+
     if [ -n "$REPO_PATH" ] && [ -n "$GIT_HOST" ]; then
         # Remove .git suffix if present, then add it back for consistency
         REPO_PATH="${REPO_PATH%.git}"
