@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "core",
     "users",
     "accounts",
+    "balances",
 ]
 
 if SENTRY_DSN and SENTRY_DSN.strip() and SENTRY_DSN.strip().startswith(("http://", "https://")):

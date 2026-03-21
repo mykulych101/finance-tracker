@@ -336,6 +336,42 @@
         "decorators": ""
     },
     {
+        "url": "/api/balances/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/balances\\.<format>/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/balances/<pk>/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/balances/<pk>\\.<format>/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/api/<drf_format_suffix:format>",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
         "url": "/__debug__/render_panel/",
         "module": "debug_toolbar.views.render_panel",
         "name": "djdt:render_panel",

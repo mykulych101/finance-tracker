@@ -1,7 +1,8 @@
 {
 	"python-envs.defaultEnvManager": "ms-python.python:poetry",
 	"python-envs.defaultPackageManager": "ms-python.python:poetry",
-	"python.defaultInterpreterPath": "/Users/vadymmykulych/code/finance-tracker/src/.venv/bin/python",
+	"python.defaultInterpreterPath": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+	"python.analysis.extraPaths": ["${workspaceFolder}/src"],
 	"python.testing.pytestArgs": ["src"],
 	"python.testing.unittestEnabled": false,
 	"python.testing.pytestEnabled": true,
