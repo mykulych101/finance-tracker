@@ -1,13 +1,16 @@
-from rest_framework import status
+from rest_framework import mixins, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import GenericViewSet
 
-from balances.api.serializers import BalanceRecordSerializer
+from balances.api.serializers import BalanceRecordSerializer, LatestBalanceRecordSerializer
 from balances.models import BalanceRecord
 
 
-class BalanceRecordViewSet(ModelViewSet):
+class BalanceRecordViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin, GenericViewSet
+):
     serializer_class = BalanceRecordSerializer
     permission_classes = [IsAuthenticated]
 
@@ -21,3 +24,9 @@ class BalanceRecordViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         super().create(request, *args, **kwargs)
         return Response(status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["GET"], url_path="latest")
+    def latest(self, request):
+        latest_records = BalanceRecord.objects.latest_per_account(request.user)
+        serializer = LatestBalanceRecordSerializer(latest_records, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

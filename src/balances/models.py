@@ -2,6 +2,8 @@ from django.db import models
 
 from accounts.models import Account
 
+from .managers import BalanceRecordManager
+
 
 class BalanceRecord(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="balance_records")
@@ -9,6 +11,8 @@ class BalanceRecord(models.Model):
     date = models.DateField()
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = BalanceRecordManager()
 
     class Meta:
         ordering = ["-date", "-created_at"]

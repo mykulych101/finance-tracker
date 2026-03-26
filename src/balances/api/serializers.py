@@ -31,3 +31,11 @@ class BalanceRecordSerializer(serializers.ModelSerializer):
         if value.user != user:
             raise serializers.ValidationError("You can only add balance records to your own accounts.")
         return value
+
+
+class LatestBalanceRecordSerializer(serializers.ModelSerializer):
+    account_name = serializers.CharField(source="account.name")
+
+    class Meta:
+        model = BalanceRecord
+        fields = ("account_id", "account_name", "amount", "date")
