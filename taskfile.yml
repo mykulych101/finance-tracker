@@ -39,3 +39,7 @@ tasks:
       - poetry run coverage report -m
       - poetry run coverage xml
       - poetry run genbadge coverage -i coverage.xml -o ../docs/coverage.svg
+  dev.format:
+    desc: "Format code with ruff"
+    cmds:
+      - ruff check --fix .
