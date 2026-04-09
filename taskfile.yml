@@ -12,7 +12,7 @@ tasks:
     silent: true
   dev.manage:
     desc: "Run Django management commands"
-    dir: backend
+    dir: src
     cmds:
       - poetry run python manage.py {{.CLI_ARGS}}
   dev.up:

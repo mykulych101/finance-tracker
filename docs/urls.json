@@ -420,6 +420,42 @@
         "decorators": ""
     },
     {
+        "url": "/api/transactions/",
+        "module": "transactions.api.views.TransactionViewSet",
+        "name": "transactions-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/transactions\\.<format>/",
+        "module": "transactions.api.views.TransactionViewSet",
+        "name": "transactions-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/transactions/<pk>/",
+        "module": "transactions.api.views.TransactionViewSet",
+        "name": "transactions-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/transactions/<pk>\\.<format>/",
+        "module": "transactions.api.views.TransactionViewSet",
+        "name": "transactions-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/api/<drf_format_suffix:format>",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
         "url": "/__debug__/render_panel/",
         "module": "debug_toolbar.views.render_panel",
         "name": "djdt:render_panel",
