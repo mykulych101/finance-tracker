@@ -9,21 +9,11 @@ from transactions.constants import TransactionType
 from transactions.models import Transaction
 
 
-class TransactionSerializer(serializers.ModelSerializer):
-    account = AccountSlimSerializer(read_only=True)
-    account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.none(), source="account", write_only=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        user = self.context["request"].user
-        self.fields["account_id"].queryset = Account.objects.filter(user=user)
-
+class BaseTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = (
             "id",
-            "account",
-            "account_id",
             "type",
             "amount",
             "date",
@@ -35,6 +25,32 @@ class TransactionSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "is_system", "created_at", "updated_at")
 
+
+class ReadTransactionSerializer(BaseTransactionSerializer):
+    account = AccountSlimSerializer(read_only=True)
+
+    class Meta(BaseTransactionSerializer.Meta):
+        fields = (
+            *BaseTransactionSerializer.Meta.fields,
+            "account",
+        )
+
+
+class WriteTransactionSerializer(serializers.ModelSerializer):
+    account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all(), source="account", write_only=True)
+
+    class Meta(BaseTransactionSerializer.Meta):
+        fields = (
+            *BaseTransactionSerializer.Meta.fields,
+            "account_id",
+        )
+
+    def validate_account_id(self, value):
+        user = self.context["request"].user
+        if value.user != user:
+            raise serializers.ValidationError("Account does not belong to the authenticated user.")
+        return value
+
     @atomic
     def create(self, validated_data):
         transaction = Transaction.objects.create(**validated_data)
@@ -44,12 +60,17 @@ class TransactionSerializer(serializers.ModelSerializer):
         transaction_type = validated_data["type"]
 
         previous_balance_record = (
-            BalanceRecord.objects.filter(account=account, date__lt=transaction_date).order_by("-date").first()
+            BalanceRecord.objects.select_for_update()
+            .filter(account=account, date__lt=transaction_date)
+            .order_by("-date")
+            .first()
         )
         previous_amount = previous_balance_record.amount if previous_balance_record else 0
         delta = transaction_amount if transaction_type == TransactionType.INCOME else -transaction_amount
 
-        balance_record = BalanceRecord.objects.filter(account=account, date=transaction_date).first()
+        balance_record = (
+            BalanceRecord.objects.select_for_update().filter(account=account, date=transaction_date).first()
+        )
         if balance_record:
             calculated = Transaction.objects.filter(account=account, date=transaction_date).aggregate(
                 income=Sum("amount", filter=Q(type=TransactionType.INCOME)),
@@ -66,9 +87,12 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def _recalculate_subsequent_balances(self, account: Account, transaction: Transaction):
         # Recalculate all balances where date is after transaction date
-        subsequent_balance_records = BalanceRecord.objects.filter(account=account, date__gt=transaction.date).order_by(
-            "date"
+        subsequent_balance_records = list(
+            BalanceRecord.objects.select_for_update()
+            .filter(account=account, date__gt=transaction.date)
+            .order_by("date")
         )
+        delta = transaction.amount if transaction.type == TransactionType.INCOME else -transaction.amount
         for record in subsequent_balance_records:
-            record.amount += transaction.amount if transaction.type == TransactionType.INCOME else -transaction.amount
-            record.save(update_fields=["amount"])
+            record.amount += delta
+        BalanceRecord.objects.bulk_update(subsequent_balance_records, ["amount"])

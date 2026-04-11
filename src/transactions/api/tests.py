@@ -78,7 +78,8 @@ class TransactionTests(BaseAPITest):
             "description": "Test transaction",
             "raw_category": "Food",
         }
-        resp = self.client.post(self.list_url, data)
+        with self.assertNumQueries(12):
+            resp = self.client.post(self.list_url, data)
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(Transaction.objects.count(), 1)
         transaction = Transaction.objects.first()

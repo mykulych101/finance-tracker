@@ -1,6 +1,4 @@
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from accounts.api.serializers import AccountSerializer
@@ -13,10 +11,6 @@ class AccountViewSet(ModelViewSet):
 
     def get_queryset(self):
         return Account.objects.filter(user=self.request.user, is_active=True)
-
-    def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response(status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
         instance.is_active = False
