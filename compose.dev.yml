@@ -101,6 +101,10 @@ services:
       - "8050:8000"
     env_file:
       - ./.env
+  greenmask:
+    extends:
+      file: compose.prod.yml
+      service: greenmask
 # Uncomment if you need Caddy locally
 #  caddy:
 #    profiles: ["dev"]
