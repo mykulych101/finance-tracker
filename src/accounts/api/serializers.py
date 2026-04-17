@@ -18,3 +18,9 @@ class AccountSerializer(serializers.ModelSerializer):
         if Account.objects.filter(user=user, name=value, is_active=True).exists():
             raise serializers.ValidationError("You already have an account with this name.")
         return value
+
+
+class AccountSlimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ("id", "name")

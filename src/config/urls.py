@@ -27,6 +27,7 @@ urlpatterns = [
     path("", include("core.urls")),
     path("", include("accounts.urls")),
     path("", include("balances.urls")),
+    path("", include("transactions.urls")),
 ]
 
 # Serve media files via Django

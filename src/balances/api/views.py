@@ -21,10 +21,6 @@ class BalanceRecordViewSet(
             .order_by("-date", "-created_at")
         )
 
-    def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response(status=status.HTTP_201_CREATED)
-
     @action(detail=False, methods=["GET"], url_path="latest")
     def latest(self, request):
         latest_records = BalanceRecord.objects.latest_per_account(request.user)

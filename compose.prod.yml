@@ -115,6 +115,26 @@ services:
       driver: journald
       options:
         tag: "{{.Name}}"
+  greenmask:
+    image: "greenmask/greenmask:latest"
+    volumes:
+      - ./docker/greenmask:/var/lib/workdir
+    env_file:
+      - ./.env
+    environment:
+      - PGUSER=${POSTGRES_USER}
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+      - DUMP_PG_DUMP_OPTIONS_DBNAME=${POSTGRES_DB}
+      - DUMP_PG_DUMP_OPTIONS_HOST=${POSTGRES_HOST}
+      - RESTORE_PG_RESTORE_OPTIONS_HOST=${POSTGRES_HOST}
+      - RESTORE_PG_RESTORE_OPTIONS_DBNAME=${POSTGRES_DB}
+      - STORAGE_S3_ENDPOINT=${R2_S3_ENDPOINT_URL}
+      - STORAGE_S3_BUCKET=${R2_S3_BUCKET_NAME}
+      - STORAGE_S3_FORCE_PATH_STYLE=true
+      - STORAGE_S3_REGION=auto
+      - STORAGE_S3_PREFIX=backups
+      - STORAGE_S3_ACCESS_KEY_ID=${R2_S3_ACCESS_KEY_ID}
+      - STORAGE_S3_SECRET_ACCESS_KEY=${R2_S3_SECRET_ACCESS_KEY}
 
 volumes:
   prod_postgres:
