@@ -8,6 +8,8 @@ from accounts.api.factories import AccountFactory
 from balances.api.factories import BalanceRecordFactory
 from balances.models import BalanceRecord
 from core.api.tests import BaseAPITest
+from transactions.constants import TransactionType
+from transactions.models import Transaction
 
 
 class BalanceRecordTests(BaseAPITest):
@@ -79,19 +81,42 @@ class BalanceRecordTests(BaseAPITest):
         self.assertEqual(balance.amount, self.default_data["amount"])
         self.assertEqual(balance.date, date.fromisoformat(self.default_data["date"]))
         self.assertEqual(balance.note, self.default_data["note"])
+        transaction = Transaction.objects.filter(
+            account=self.account, date=self.default_data["date"], is_system=True
+        ).first()
+        self.assertIsNotNone(transaction)
+        self.assertEqual(transaction.amount, self.default_data["amount"])
+        self.assertEqual(transaction.type, TransactionType.INCOME)
 
     def test_create_balance_record_duplicate_date(self):
         date = "2024-01-01"
-        balance = BalanceRecord.objects.create(account=self.account, amount=100.0, date=date, note="First record")
+        resp = self.client.post(self.list_url, self.default_data)
+        self.assertEqual(resp.status_code, 201)
+        balance = BalanceRecord.objects.get(account=self.account, date=date)
+        balance.amount = self.default_data["amount"]
+        balance.note = self.default_data["note"]
+        self.assertEqual(Transaction.objects.count(), 1)
+        transaction = Transaction.objects.filter(account=self.account, date=date, is_system=True).first()
+        self.assertIsNotNone(transaction)
+        self.assertEqual(transaction.amount, self.default_data["amount"])
+        self.assertEqual(transaction.type, TransactionType.INCOME)
+
         data = self.default_data.copy()
         data["date"] = date
-        data["amount"] = 200.0
+        data["amount"] = 10.0
         data["note"] = "Second record"
         resp = self.client.post(self.list_url, data)
         self.assertEqual(resp.status_code, 201)
         balance.refresh_from_db()
         self.assertEqual(balance.amount, data["amount"])
         self.assertEqual(balance.note, data["note"])
+        self.assertEqual(Transaction.objects.count(), 2)
+        transaction = Transaction.objects.filter(
+            account=self.account, amount=data["amount"], date=date, is_system=True
+        ).first()
+        self.assertIsNotNone(transaction)
+        self.assertEqual(transaction.amount, data["amount"])
+        self.assertEqual(transaction.type, TransactionType.EXPENSE)
 
     def test_create_balance_record_with_future_date(self):
         future_date = (timezone.localdate() + timedelta(days=1)).isoformat()

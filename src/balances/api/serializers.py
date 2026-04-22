@@ -1,7 +1,10 @@
+from django.db.transaction import atomic
 from django.utils import timezone
 from rest_framework import serializers
 
 from balances.models import BalanceRecord
+from transactions.constants import TransactionType
+from transactions.models import Transaction
 
 
 class BalanceRecordSerializer(serializers.ModelSerializer):
@@ -10,16 +13,34 @@ class BalanceRecordSerializer(serializers.ModelSerializer):
         fields = ("id", "account", "amount", "date", "note", "created_at")
         read_only_fields = ("id", "created_at")
 
+    @atomic
     def create(self, validated_data):
         date = validated_data["date"]
         account = validated_data["account"]
-        existing_record = BalanceRecord.objects.filter(account=account, date=date).first()
-        if existing_record:
-            existing_record.amount = validated_data["amount"]
-            existing_record.note = validated_data["note"]
-            existing_record.save(update_fields=["amount", "note"])
-            return existing_record
-        return BalanceRecord.objects.create(**validated_data)
+
+        # Create balance record
+        balance_record = BalanceRecord.objects.filter(account=account, date=date).first()
+        if balance_record:
+            transaction_type = (
+                TransactionType.INCOME if validated_data["amount"] >= balance_record.amount else TransactionType.EXPENSE
+            )
+            balance_record.amount = validated_data["amount"]
+            balance_record.note = validated_data["note"]
+            balance_record.save(update_fields=["amount", "note"])
+        else:
+            balance_record = BalanceRecord.objects.create(**validated_data)
+            transaction_type = TransactionType.INCOME if validated_data["amount"] >= 0 else TransactionType.EXPENSE
+
+        # Create transaction
+        Transaction.objects.create(
+            is_system=True,
+            account=account,
+            amount=validated_data["amount"],
+            date=date,
+            type=transaction_type,
+        )
+
+        return balance_record
 
     def validate_date(self, value):
         if value > timezone.localdate():
