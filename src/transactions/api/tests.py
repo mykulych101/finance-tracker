@@ -205,7 +205,7 @@ class TransactionTests(BaseAPITest):
             "raw_category": "Salary",
         }
         url = reverse("transactions-detail", args=[transaction.id])
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 400)
         transaction.refresh_from_db()
         self.assertEqual(transaction.account, self.account)
@@ -226,7 +226,7 @@ class TransactionTests(BaseAPITest):
             "description": "Updated transaction",
             "raw_category": "Updated category",
         }
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
 
         transaction.refresh_from_db()
@@ -262,7 +262,7 @@ class TransactionTests(BaseAPITest):
             "description": "Updated transaction",
             "raw_category": "Updated category",
         }
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
 
         balance_record.refresh_from_db()
@@ -297,7 +297,7 @@ class TransactionTests(BaseAPITest):
             "description": "Updated",
             "raw_category": "Updated",
         }
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
 
         balance_today.refresh_from_db()
@@ -325,7 +325,7 @@ class TransactionTests(BaseAPITest):
             "description": "Updated",
             "raw_category": "Updated",
         }
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
 
         transaction.refresh_from_db()
@@ -355,7 +355,7 @@ class TransactionTests(BaseAPITest):
             "description": "Updated",
             "raw_category": "Updated",
         }
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
 
         transaction.refresh_from_db()
@@ -391,7 +391,7 @@ class TransactionTests(BaseAPITest):
             "description": "Updated",
             "raw_category": "Updated",
         }
-        resp = self.client.put(url, data)
+        resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
 
         balance_today.refresh_from_db()

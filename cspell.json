@@ -12,6 +12,7 @@
         "PYTHONPATH",
         "PGUSER",
         "PGPASSWORD",
-        "DBNAME"
+        "DBNAME",
+        "simplejwt"
     ]
 }
