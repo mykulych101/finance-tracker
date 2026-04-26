@@ -36,7 +36,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Create directory and copy project files
 WORKDIR $PYSETUP_PATH
-COPY ./src/poetry.lock ./src/pyproject.toml ./
+COPY ./backend/poetry.lock ./backend/pyproject.toml ./
 
 # Install dependencies with virtualenv in project
 RUN poetry install --only docs
@@ -62,12 +62,12 @@ COPY --from=builder_base $POETRY_HOME $POETRY_HOME
 
 WORKDIR $PYSETUP_PATH
 COPY ./docs $PYSETUP_PATH/docs
-COPY ./src $PYSETUP_PATH/src
+COPY ./backend $PYSETUP_PATH/backend
 COPY ./docker/mkdocs $PYSETUP_PATH
 COPY ./docker/mkdocs/entrypoint $PYSETUP_PATH
 
 # Add source directory to PYTHONPATH
-ENV PYTHONPATH="${PYSETUP_PATH}/src:${PYTHONPATH}"
+ENV PYTHONPATH="${PYSETUP_PATH}/backend:${PYTHONPATH}"
 
 RUN chmod +x ./entrypoint
 

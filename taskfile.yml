@@ -28,7 +28,7 @@ tasks:
       - docker compose -f compose.prod.yml run --rm greenmask restore latest --config /var/lib/workdir/config.yaml
   dev.manage:
     desc: "Run Django management commands"
-    dir: src
+    dir: backend
     cmds:
       - poetry run python manage.py {{.CLI_ARGS}}
   dev.up:
@@ -42,14 +42,14 @@ tasks:
       - docker compose -f compose.dev.yml down --remove-orphans
   dev.api:
     desc: "Generate API specification from BE"
-    dir: src
+    dir: backend
     cmds:
       - poetry run python manage.py show_urls --format=pretty-json > ../docs/urls.json
   dev.coverage:
     env:
       DISABLE_EXTERNAL_API_CALLS: "1"
       DJANGO_SETTINGS_MODULE: "config.settings.test"
-    dir: src
+    dir: backend
     cmds:
       - poetry run coverage run manage.py test -b
       - poetry run coverage report -m
@@ -57,7 +57,7 @@ tasks:
       - poetry run genbadge coverage -i coverage.xml -o ../docs/coverage.svg
   dev.lint:
     desc: "Format code with ruff"
-    dir: src
+    dir: backend
     cmds:
       - poetry run ruff check --fix .
       - poetry run ruff format .

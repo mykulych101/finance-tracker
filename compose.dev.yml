@@ -5,8 +5,8 @@ x-django-common: &django-common
     - redis
     - mailhog
   volumes:
-    - ./src:/opt/project/src:cached
-    - /opt/project/src/.venv
+    - ./backend:/opt/project/backend:cached
+    - /opt/project/backend/.venv
     - ./data/dev:/data:z
   env_file:
     - ./.env
@@ -95,7 +95,7 @@ services:
     volumes:
       - ./docs:/docs:cached
       - ./data/dev_mkdocs:/data:z
-      - ./src:/code/src:cached
+      - ./backend:/code/backend:cached
       - /code/.venv
     ports:
       - "8050:8000"

@@ -35,7 +35,7 @@ jobs:
       - id: get_added_migrations
         name: Get Added Migrations
         run: |
-          ADDED_MIGRATIONS=$(git diff --name-only --diff-filter=A origin/${{ github.event.pull_request.base.ref }}..origin/${{ github.head_ref }} | grep "/migrations/" | sed "s/src\///" | sed "s/migrations\///" | sed "s/\(.*\/.\{4\}\)\(.*\)/\1/")
+          ADDED_MIGRATIONS=$(git diff --name-only --diff-filter=A origin/${{ github.event.pull_request.base.ref }}..origin/${{ github.head_ref }} | grep "/migrations/" | sed "s/backend\///" | sed "s/migrations\///" | sed "s/\(.*\/.\{4\}\)\(.*\)/\1/")
           echo "added_migrations<<EOF" >> $GITHUB_OUTPUT
           echo "$ADDED_MIGRATIONS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -49,7 +49,7 @@ jobs:
       - id: compare_existing_migrations
         name: Compare Existing Migrations
         run: |
-          EXISTING_MIGRATIONS=$(find . -type f -regex '.*\/migrations\/.*' ! -regex '.*pycache.*' | sed "s/.\///" | sed "s/src\///" | sed "s/migrations\///" | sed "s/\(.*\/.\{4\}\)\(.*\)/\1/" | sort -u)
+          EXISTING_MIGRATIONS=$(find . -type f -regex '.*\/migrations\/.*' ! -regex '.*pycache.*' | sed "s/.\///" | sed "s/backend\///" | sed "s/migrations\///" | sed "s/\(.*\/.\{4\}\)\(.*\)/\1/" | sort -u)
           ADDED_MIGRATIONS="${{ steps.get_added_migrations.outputs.added_migrations }}"
           ADDED_MIGRATIONS=$(echo "$ADDED_MIGRATIONS" | tr ' ' '\n' | sort -u)
           MATCHES=$(diff -u <(echo "$ADDED_MIGRATIONS") <(echo "$EXISTING_MIGRATIONS") | grep '^ ' | wc -l)
@@ -74,18 +74,18 @@ jobs:
       run: pip install ruff pip-audit poetry
 
     - name: Ruff check
-      working-directory: ./src
+      working-directory: ./backend
       run: ruff check .
 
     - name: Ruff format check
-      working-directory: ./src
+      working-directory: ./backend
       run: ruff format --check .
 
     # Provides warnings for vulnerable dependencies, but doesn't fail the job, since we don't want to block PRs for that.
     # We'll still get the warnings in the logs and can address them in a timely manner.
     - name: Audit Python dependencies
       continue-on-error: true
-      working-directory: ./src
+      working-directory: ./backend
       run: poetry export -f requirements.txt --without-hashes -o /tmp/requirements.txt && pip-audit -r /tmp/requirements.txt
 
   test-backend:

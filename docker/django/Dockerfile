@@ -11,8 +11,8 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_HOME="/opt/poetry" \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
-    PYSETUP_PATH="/opt/project/src" \
-    VENV_PATH="/opt/project/src/.venv"
+    PYSETUP_PATH="/opt/project/backend" \
+    VENV_PATH="/opt/project/backend/.venv"
 
 # prepend poetry and venv to path
 ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
@@ -32,18 +32,18 @@ RUN addgroup --gid 1024 appuser \
     && adduser --disabled-password --gecos "" --force-badname --ingroup appuser appuser
 
 # Set WORKDIR to the project directory
-WORKDIR /opt/project/src
+WORKDIR /opt/project/backend
 
 # Copy only pyproject.toml and poetry.lock first (for better caching)
-COPY --chown=appuser:appuser ./src/pyproject.toml ./src/poetry.lock /opt/project/src/
+COPY --chown=appuser:appuser ./backend/pyproject.toml ./backend/poetry.lock /opt/project/backend/
 
 # Create project directory and set permissions
-RUN mkdir -p /opt/project/src
+RUN mkdir -p /opt/project/backend
 RUN chown -R appuser:appuser /opt/project
 
 # Ensure .pytest_cache with correct permissions
-RUN mkdir -p /opt/project/src/.pytest_cache && \
-    chown -R appuser:appuser /opt/project/src/.pytest_cache
+RUN mkdir -p /opt/project/backend/.pytest_cache && \
+    chown -R appuser:appuser /opt/project/backend/.pytest_cache
 
 # Switch to non-root user for Poetry operations
 USER appuser
@@ -72,7 +72,7 @@ RUN poetry run python -c "import psycopg2; print('psycopg2 installed successfull
 RUN poetry run pip list
 
 # Copy the rest of the application code
-COPY --chown=appuser:appuser ./src /opt/project/src
+COPY --chown=appuser:appuser ./backend /opt/project/backend
 
 # Switch back to root for copying files
 USER root
@@ -99,5 +99,5 @@ RUN mkdir -p /data/staticfiles \
     && chmod 775 /data/staticfiles
 
 # Keep container as root, entrypoint will switch to appuser
-WORKDIR /opt/project/src
+WORKDIR /opt/project/backend
 ENTRYPOINT ["/entrypoint"]
