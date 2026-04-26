@@ -55,7 +55,9 @@ tasks:
       - poetry run coverage report -m
       - poetry run coverage xml
       - poetry run genbadge coverage -i coverage.xml -o ../docs/coverage.svg
-  dev.format:
+  dev.lint:
     desc: "Format code with ruff"
+    dir: src
     cmds:
-      - ruff check --fix .
+      - poetry run ruff check --fix .
+      - poetry run ruff format .
