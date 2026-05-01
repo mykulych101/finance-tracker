@@ -22,6 +22,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*" if CONFIGURATION == "dev" el
 INTERNAL_IPS = config("INTERNAL_IPS", default="127.0.0.1", cast=Csv())
 
 SITE_URL = config("SITE_URL", default="")
+FRONTEND_URL = config("FRONTEND_URL", default="")
 
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default=SITE_URL, cast=Csv())
 

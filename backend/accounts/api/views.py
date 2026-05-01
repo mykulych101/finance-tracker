@@ -8,6 +8,7 @@ from accounts.models import Account
 class AccountViewSet(ModelViewSet):
     serializer_class = AccountSerializer
     permission_classes = [IsAuthenticated]
+    queryset = Account.objects.all()
 
     def get_queryset(self):
         return Account.objects.filter(user=self.request.user, is_active=True)

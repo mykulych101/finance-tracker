@@ -16,5 +16,20 @@
 			"source.fixAll.ruff": "explicit"
 		}
 	},
-	"python.languageServer": "Pylance"
+	"python.languageServer": "Pylance",
+	"eslint.workingDirectories": [{"directory": "./frontend", "changeProcessCWD": true}],
+	"[typescript]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "vscode.typescript-language-features",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		}
+	},
+	"[typescriptreact]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "vscode.typescript-language-features",
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint": "explicit"
+		}
+	}
 }

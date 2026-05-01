@@ -2,7 +2,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import generics, status
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -16,23 +16,26 @@ from users.models import User
 from users.tasks import send_email
 from users.utils import account_activation_token
 
-from .serializers import ChangePasswordSerializer, MyTokenObtainPairSerializer, UserProfileSerializer, UserSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    LoginResponseSerializer,
+    MyTokenObtainPairSerializer,
+    RegisterResponseSerializer,
+    UserProfileSerializer,
+    UserSerializer,
+)
 
 
+@extend_schema_view(
+    post=extend_schema(
+        request=UserSerializer,
+        responses={201: RegisterResponseSerializer},
+    ),
+)
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    @extend_schema(
-        responses=UserSerializer,
-        examples=[
-            {
-                "user": {"id": 1, "email": "user@example.com", "name": "User Name"},
-                "access": "access_token_string",
-                "refresh": "refresh_token_string",
-            },
-        ],
-    )
     def create(self, request, *args, **kwargs):
         # Use the serializer to validate and create the new user
         serializer = self.get_serializer(data=request.data)
@@ -40,11 +43,11 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
 
         # mail settings
-        current_site = settings.SITE_URL
+        frontend_url = settings.FRONTEND_URL
         mail_subject = "Activate your account"
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = account_activation_token.make_token(user)
-        activation_link = f"http://{current_site}/api/activate/{uid}/{token}/"
+        activation_link = f"{frontend_url}/activate/{uid}/{token}/"
         message = render_to_string(
             "email/activation_email.html",
             {
@@ -65,7 +68,7 @@ class RegisterView(generics.CreateAPIView):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
-        # Prepare the response data
+        # # Prepare the response data
         response_data = {
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
             "access": access_token,
@@ -77,7 +80,7 @@ class RegisterView(generics.CreateAPIView):
 
 @extend_schema(
     request=MyTokenObtainPairSerializer,
-    responses=MyTokenObtainPairSerializer,
+    responses=LoginResponseSerializer,
 )
 class LoginView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -138,6 +141,10 @@ class ChangePasswordView(UpdateAPIView):
 
 class ActivateAccountView(APIView):
     @extend_schema(
+        parameters=[
+            OpenApiParameter("uidb64", type=str, location=OpenApiParameter.PATH),
+            OpenApiParameter("token", type=str, location=OpenApiParameter.PATH),
+        ],
         responses={
             200: OpenApiResponse(description="Account activated successfully"),
             400: OpenApiResponse(description="Invalid activation link"),

@@ -17,3 +17,12 @@ repos:
       - id: ruff-format
         args: [--check]
         files: ^backend/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        language: node
+        entry: bash -c 'cd frontend && yarn lint'
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false

@@ -1,0 +1,10 @@
+{
+	"apiFile": "./src/redux/baseApi.ts",
+	"apiImport": "baseApi",
+	"exportName": "backendApi",
+	"hooks": true,
+	"outputFile": "./src/redux/api.ts",
+	"schemaFile": "../docs/schema.yml",
+	"tag": true,
+	"useEnum": true
+}

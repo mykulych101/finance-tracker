@@ -13,6 +13,7 @@ class BalanceRecordViewSet(
 ):
     serializer_class = BalanceRecordSerializer
     permission_classes = [IsAuthenticated]
+    queryset = BalanceRecord.objects.all()
 
     def get_queryset(self):
         return (

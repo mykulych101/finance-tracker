@@ -10,6 +10,7 @@ from transactions.models import Transaction
 
 class TransactionViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
+    queryset = Transaction.objects.all()
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:

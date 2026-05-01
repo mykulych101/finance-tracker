@@ -14,6 +14,7 @@ class UserProfileTests(APITestCase):
     def test_retrieve_profile(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.user.id)
         self.assertEqual(response.data["email"], self.user.email)
         self.assertEqual(response.data["name"], self.user.name)
 

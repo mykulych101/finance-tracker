@@ -1,10 +1,41 @@
 {
 	"version": "0.2.0",
+		"compounds": [
+		{
+			"configurations": ["be sync", "fe"],
+			"name": "fe+be",
+			"presentation": {
+				"order": 1
+			},
+			"stopAll": true
+		},
+	],
 	"configurations": [
+		{
+			"consoleTitle": "React",
+			"cwd": "${workspaceRoot}/frontend",
+			"envFile": "${workspaceFolder}/.env",
+			"name": "fe",
+			"presentation": {
+				"order": 2
+			},
+			"request": "launch",
+			"runtimeArgs": ["run", "dev"],
+			"runtimeExecutable": "yarn",
+			"runtimeVersion": "22.13.0",
+			"type": "node"
+		},
+		{
+			"name": "fe:debug",
+			"request": "launch",
+			"type": "editor-browser",
+			"url": "http://finance-tracker.local:3001",
+			"webRoot": "${workspaceFolder}/frontend"
+		},
 		{
 			"args": ["runserver", "--noreload"],
 			"autoStartBrowser": false,
-			"console": "integratedTerminal",
+			"console": "internalConsole",
 			"cwd": "${workspaceFolder}/backend",
 			"django": true,
 			"envFile": "${workspaceFolder}/.env",
@@ -18,7 +49,7 @@
 		},
 		{
 			"args": ["-A", "core", "beat", "-l", "INFO"],
-			"console": "integratedTerminal",
+			"console": "internalConsole",
 			"cwd": "${workspaceFolder}/backend",
 			"django": true,
 			"envFile": "${workspaceFolder}/.env",
@@ -32,7 +63,7 @@
 		},
 		{
 			"args": ["-A", "core", "worker", "-l", "INFO", "-Q", "django,celery", "--pool=solo"],
-			"console": "integratedTerminal",
+			"console": "internalConsole",
 			"cwd": "${workspaceFolder}/backend",
 			"envFile": "${workspaceFolder}/.env",
 			"justMyCode": true,
@@ -45,7 +76,7 @@
 		},
 		{
 			"args": ["-A", "core", "flower", "--broker=redis://localhost:6379/0", "--port=5555"],
-			"console": "integratedTerminal",
+			"console": "internalConsole",
 			"cwd": "${workspaceFolder}/backend",
 			"envFile": "${workspaceFolder}/.env",
 			"justMyCode": true,

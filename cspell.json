@@ -3,6 +3,7 @@
     "language": "en",
     "words": [
         "greenmask",
+        "codegen",
         "mkdocs",
         "venv",
         "celeryworker",
