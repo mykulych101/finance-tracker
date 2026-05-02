@@ -4,10 +4,9 @@ export const addTagTypes = [
   "activate",
   "balances",
   "change-password",
-  "login",
+  "authentication",
   "logout",
   "profile",
-  "register",
   "token",
   "transactions",
 ] as const;
@@ -159,11 +158,15 @@ const injectedRtkApi = api
           method: "POST",
           body: queryArg.myTokenObtainPair,
         }),
-        invalidatesTags: ["login"],
+        invalidatesTags: ["authentication"],
       }),
       logoutCreate: build.mutation<LogoutCreateApiResponse, LogoutCreateApiArg>(
         {
-          query: () => ({ url: `/api/logout/`, method: "POST" }),
+          query: (queryArg) => ({
+            url: `/api/logout/`,
+            method: "POST",
+            body: queryArg.logout,
+          }),
           invalidatesTags: ["logout"],
         },
       ),
@@ -205,7 +208,7 @@ const injectedRtkApi = api
           method: "POST",
           body: queryArg.user,
         }),
-        invalidatesTags: ["register"],
+        invalidatesTags: ["authentication"],
       }),
       tokenCreate: build.mutation<TokenCreateApiResponse, TokenCreateApiArg>({
         query: (queryArg) => ({
@@ -371,7 +374,9 @@ export type LoginCreateApiArg = {
   myTokenObtainPair: MyTokenObtainPairWrite;
 };
 export type LogoutCreateApiResponse = unknown;
-export type LogoutCreateApiArg = void;
+export type LogoutCreateApiArg = {
+  logout: Logout;
+};
 export type ProfileRetrieveApiResponse = /** status 200  */ UserProfileRead;
 export type ProfileRetrieveApiArg = void;
 export type ProfileUpdateApiResponse = /** status 200  */ UserProfileRead;
@@ -530,6 +535,9 @@ export type MyTokenObtainPair = {};
 export type MyTokenObtainPairWrite = {
   email: string;
   password: string;
+};
+export type Logout = {
+  refresh: string;
 };
 export type UserProfile = {
   name: string;

@@ -3,7 +3,6 @@
 import { useState, type ChangeEvent } from 'react';
 import { useFinance } from '@/context/FinanceContext';
 import { useCurrency } from '@/context/CurrencyContext';
-import { useAuth } from '@/context/AuthContext';
 import { CurrencySelector } from './CurrencySelector';
 import { CloudSyncToggle } from './CloudSyncToggle';
 import { ThemeToggle } from './ThemeToggle';
@@ -18,7 +17,6 @@ const Settings = () => {
     clearAllData
   } = useFinance();
   const { selectedCurrency } = useCurrency();
-  const { isAuthConfigured } = useAuth();
 
   const [importFile, setImportFile] = useState<File | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -182,15 +180,13 @@ const Settings = () => {
       </div>
 
       {/* Cloud Sync Settings - only shown when Auth0 is configured */}
-      {isAuthConfigured && (
-        <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-neutral-100 mb-4">☁️ Cloud Sync Settings</h2>
-          <p className="text-gray-600 dark:text-neutral-400 mb-4">
-            Enable or disable cloud synchronization of your financial data. When enabled, your data will be securely stored and synced across devices.
-          </p>
-          <CloudSyncToggle />
-        </div>
-      )}
+      <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-neutral-100 mb-4">☁️ Cloud Sync Settings</h2>
+        <p className="text-gray-600 dark:text-neutral-400 mb-4">
+          Enable or disable cloud synchronization of your financial data. When enabled, your data will be securely stored and synced across devices.
+        </p>
+        <CloudSyncToggle />
+      </div>
 
       {/* Export Section */}
       <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-6">

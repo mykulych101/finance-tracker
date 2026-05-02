@@ -19,6 +19,7 @@ from users.utils import account_activation_token
 from .serializers import (
     ChangePasswordSerializer,
     LoginResponseSerializer,
+    LogoutSerializer,
     MyTokenObtainPairSerializer,
     RegisterResponseSerializer,
     UserProfileSerializer,
@@ -26,6 +27,7 @@ from .serializers import (
 )
 
 
+@extend_schema(tags=["authentication"])
 @extend_schema_view(
     post=extend_schema(
         request=UserSerializer,
@@ -79,6 +81,7 @@ class RegisterView(generics.CreateAPIView):
 
 
 @extend_schema(
+    tags=["authentication"],
     request=MyTokenObtainPairSerializer,
     responses=LoginResponseSerializer,
 )
@@ -90,7 +93,7 @@ class LogoutView(APIView):
     permission_classes = (IsAuthenticated,)
 
     @extend_schema(
-        request=None,
+        request=LogoutSerializer,
         responses={
             204: OpenApiResponse(description="Logout successful"),
             400: OpenApiResponse(description="Bad Request"),

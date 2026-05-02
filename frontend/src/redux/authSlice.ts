@@ -35,6 +35,16 @@ export const authSlice = createSlice({
       localStorage.setItem('access', payload.access)
       localStorage.setItem('refresh', payload.refresh)
     })
+    builder.addMatcher(backendApi.endpoints.logoutCreate.matchFulfilled, (state) => {
+      localStorage.removeItem('access')
+      localStorage.removeItem('refresh')
+      localStorage.removeItem('userId')
+      state.access = null
+      state.refresh = null
+      state.isAuthenticated = false
+      state.user = null
+      state.userId = null
+    })
     builder.addMatcher(
       backendApi.endpoints.profileRetrieve.matchFulfilled,
       (state, { payload }) => {

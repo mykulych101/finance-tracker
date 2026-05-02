@@ -1,10 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
 
 const DisclaimerPage = () => {
-  const { isAuthConfigured } = useAuth();
   return (
     <div className="min-h-screen">
       <div className="max-w-4xl mx-auto p-6">
@@ -253,14 +251,12 @@ const DisclaimerPage = () => {
             >
               ⚙️ Go to Settings
             </Link>
-            {isAuthConfigured && (
-              <Link
-                href="/auth/login?screen_hint=signup"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-md font-medium transition-colors text-center"
-              >
-                🔐 Login / Register
-              </Link>
-            )}
+            <Link
+              href="/auth/login?screen_hint=signup"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-md font-medium transition-colors text-center"
+            >
+              🔐 Login / Register
+            </Link>
           </div>
         </div>
       </div>

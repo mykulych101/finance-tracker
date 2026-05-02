@@ -43,6 +43,10 @@ class LoginResponseSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
 
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     model = User
 

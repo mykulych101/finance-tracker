@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import Navigation from "@/components/Navigation";
 import ClientOnly from "@/components/ClientOnly";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { AuthProvider } from "@/context/AuthContext";
+import { AppLoader, Loader } from "@/components/AppLoader";
 import { StoreProvider } from "@/redux/StoreProvider";
 import { Toaster } from "sonner"
 
@@ -53,34 +53,20 @@ export default function RootLayout({
         <GoogleAnalytics />
         <Toaster position="top-right" />
         <StoreProvider>
-        <AuthProvider>
-          <CurrencyProvider>
-            <FinanceProvider>
-              <ThemeProvider>
-                <ClientOnly
-                  fallback={
-                    <nav className="bg-white dark:bg-neutral-900 shadow-lg border-b dark:border-neutral-700">
-                      <div className="max-w-6xl mx-auto px-4">
-                        <div className="flex justify-between items-center py-4">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-2xl">📈</span>
-                            <span className="text-xl font-bold text-gray-800 dark:text-neutral-200 hidden sm:block">Personal Finance Tracker</span>
-                            <span className="text-lg font-bold text-gray-800 dark:text-neutral-200 sm:hidden">Finance Tracker</span>
-                          </div>
-                        </div>
-                      </div>
-                    </nav>
-                  }
-                >
-                  <Navigation />
-                </ClientOnly>
-                <main className="py-8 px-4">
-                  {children}
-                </main>
-              </ThemeProvider>
-            </FinanceProvider>
-          </CurrencyProvider>
-        </AuthProvider>
+          <ClientOnly fallback={<Loader />}>
+            <AppLoader>
+              <CurrencyProvider>
+                <FinanceProvider>
+                  <ThemeProvider>
+                    <Navigation />
+                    <main className="py-8 px-4">
+                      {children}
+                    </main>
+                  </ThemeProvider>
+                </FinanceProvider>
+              </CurrencyProvider>
+            </AppLoader>
+          </ClientOnly>
         </StoreProvider>
       </body>
     </html>

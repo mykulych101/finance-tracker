@@ -1,6 +1,7 @@
 'use client';
 
 import { MyTokenObtainPairWrite, useLoginCreateMutation } from '@/redux/api';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -21,7 +22,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900/50 p-8">
           <div className="text-center mb-8">
-            <div className="text-5xl mb-3">📈</div>
+            <Image src="/logo.svg" width={60} height={60} alt="Finance tracker" className="mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-800 dark:text-neutral-100">Sign in</h1>
             <p className="text-sm text-gray-500 dark:text-neutral-400 mt-1">Personal Finance Tracker</p>
           </div>

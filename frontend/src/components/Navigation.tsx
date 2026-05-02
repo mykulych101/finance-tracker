@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useLogoutCreateMutation } from '@/redux/api';
+import { toast } from 'sonner';
+import { useAppSelector } from '@/redux/hooks';
 
 const Navigation = () => {
-  const { user, isLoading, isAuthConfigured } = useAuth();
+  const { user, refresh } = useAppSelector(state => state.auth)
+  const [logoutCreate, { isLoading: isLogoutLoading }] = useLogoutCreateMutation()
   const pathname = usePathname();
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -37,6 +40,16 @@ const Navigation = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const handleLogout = () => {
+    if (!refresh) return null
+
+    logoutCreate({ logout: { refresh } }).then(() => {
+      router.push('/login');
+    }).catch(() => {
+      toast.error('Logout failed. Please try again.');
+    })
+  }
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -53,23 +66,19 @@ const Navigation = () => {
     };
   }, [isProfileMenuOpen]);
 
-  if (isLoading) {
-    return null;
-  }
-
   return (
     <nav className="bg-white dark:bg-neutral-900 shadow-lg dark:shadow-neutral-900/50 border-b dark:border-neutral-700 transition-colors duration-200">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           {/* Logo/Brand */}
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">📈</span>
-            <span className="text-xl font-bold text-gray-800 dark:text-neutral-200 hidden sm:block">Personal Finance Tracker</span>
+          <Link href='/' className="flex items-center space-x-2">
+            <Image src='/logo.svg' width={40} height={40} alt="Finance tracker" />
+            <span className="text-xl font-bold text-gray-800 dark:text-neutral-200 hidden sm:block">Finance Tracker</span>
             <span className="text-lg font-bold text-gray-800 dark:text-neutral-200 sm:hidden">Finance Tracker</span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation - shown when user logged in OR in offline mode */}
-          {(user || !isAuthConfigured) && (
+          {user && (
             <div className="hidden md:flex space-x-1 items-center">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
@@ -89,7 +98,7 @@ const Navigation = () => {
               })}
 
               {/* Profile menu - only show when Auth0 is configured and user is logged in */}
-              {isAuthConfigured && user && (
+              {user && (
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={toggleProfileMenu}
@@ -127,10 +136,10 @@ const Navigation = () => {
                           Privacy
                         </Link>
                         <button
-                          onClick={() => router.push('/login')}
+                          onClick={handleLogout}
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-neutral-300 hover:bg-gray-100 dark:hover:bg-neutral-700"
                         >
-                          Logout
+                          {isLogoutLoading ? 'Logging out...' : 'Logout'}
                         </button>
                       </div>
                     </div>
@@ -139,20 +148,20 @@ const Navigation = () => {
               )}
             </div>
           )}
-          {!user && isAuthConfigured && (
+          {!user && (
             <div className="hidden md:flex items-center space-x-1">
-              <a
+              <Link
                 href="/login"
                 className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-800 hover:text-gray-800 dark:hover:text-neutral-200"
               >
                 <span>🔑</span>
                 <span>Login</span>
-              </a>
+              </Link>
             </div>
           )}
 
           {/* Mobile Menu Button - shown when user logged in OR in offline mode */}
-          {(user || !isAuthConfigured) && (
+          {user && (
             <div className="md:hidden flex items-center space-x-1">
               <button
                 onClick={toggleMobileMenu}
@@ -220,15 +229,14 @@ const Navigation = () => {
               <span>Privacy</span>
             </Link>
             {/* Only show logout when Auth0 is configured and user is logged in */}
-            {isAuthConfigured && user && (
-              <a
-                href="/auth/logout"
-                onClick={closeMobileMenu}
+            {user && (
+              <button
+                onClick={handleLogout}
                 className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium transition-colors text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:text-gray-800 dark:hover:text-neutral-200"
               >
                 <span className="text-lg">🔒</span>
-                <span>Logout</span>
-              </a>
+                <span>{isLogoutLoading ? 'Logging out...' : 'Logout'}</span>
+              </button>
             )}
           </div>
         </div>
