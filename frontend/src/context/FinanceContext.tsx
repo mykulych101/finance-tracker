@@ -24,7 +24,7 @@ interface FinanceContextType {
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
-
+// TODO: Remove
 export const useFinance = () => {
   const context = useContext(FinanceContext);
   if (!context) {
@@ -43,7 +43,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const savedAccounts = localStorage.getItem('finance-accounts');
     const savedBalances = localStorage.getItem('finance-balances');
 
-     if (savedAccounts) {
+    if (savedAccounts) {
       const parsedAccounts = JSON.parse(savedAccounts);
       setAccounts(parsedAccounts.map((acc: Account) => ({
         ...acc,
@@ -63,25 +63,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     getUserCloudData()
-        .then((res: { accounts: Account[]; balances: Balance[] } | null) => {
+      .then((res: { accounts: Account[]; balances: Balance[] } | null) => {
 
-          if (res === null) {
-            allowCloudSync(false);
-          } else {
-            setAccounts(res.accounts);
-            setBalances(res.balances.map(b => ({ ...b, date: new Date(b.date) })));
+        if (res === null) {
+          allowCloudSync(false);
+        } else {
+          setAccounts(res.accounts);
+          setBalances(res.balances.map(b => ({ ...b, date: new Date(b.date) })));
 
-            localStorage.setItem('finance-accounts', JSON.stringify(res.accounts));
-            localStorage.setItem('finance-balances', JSON.stringify(res.balances));
-            allowCloudSync(true);
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching user cloud data:', error);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+          localStorage.setItem('finance-accounts', JSON.stringify(res.accounts));
+          localStorage.setItem('finance-balances', JSON.stringify(res.balances));
+          allowCloudSync(true);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching user cloud data:', error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const getUserCloudData = async (): Promise<{ accounts: Account[]; balances: Balance[] } | null> => {

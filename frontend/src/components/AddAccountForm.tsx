@@ -1,59 +1,41 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import { useFinance } from '@/context/FinanceContext';
-import { AccountType, ACCOUNT_CATEGORIES } from '@/types/finance';
+// import { useFinance } from '@/context/FinanceContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useForm } from 'react-hook-form';
+import { Account, useAccountsCreateMutation } from '@/redux/api';
+import { ACCOUNT_TYPES, ACCOUNT_CATEGORIES, CURRENCY_OPTIONS } from '@/constants/financeConstants';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
 
-interface AddAccountFormProps {
-  onSuccess?: () => void;
-}
-
-export const AddAccountForm = ({ onSuccess }: AddAccountFormProps) => {
-  const { addAccount } = useFinance();
+export const AddAccountForm = () => {
   const { trackEvent } = useAnalytics();
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'asset' as AccountType,
-    category: ACCOUNT_CATEGORIES.asset[0] as string,
-  });
+  const [addAccount, { isLoading }] = useAccountsCreateMutation();
+  const { register, handleSubmit, watch, reset, setValue } = useForm<Account>()
+  const selectedType = watch('type', 'asset')
 
-  const handleTypeChange = (newType: AccountType) => {
-    setFormData({
-      ...formData,
-      type: newType,
-      category: ACCOUNT_CATEGORIES[newType][0], // Set default category
-    });
-  };
+  useEffect(() => {
+    setValue('category', ACCOUNT_CATEGORIES[selectedType][0]);
+  }, [selectedType, setValue]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim() || !formData.category) return;
-
+  const onSubmit = (values: Account) => {
     addAccount({
-      name: formData.name.trim(),
-      type: formData.type,
-      category: formData.category,
-    });
+      account: values
+    }).unwrap()
+      .then(() => {
+        toast.success('Account added successfully!');
+        // Track account creation
+        trackEvent('account_created', {
+          account_type: values.type,
+          account_category: values.category,
+        });
+      }).catch(error => toast.error(JSON.stringify(error)))
 
-    // Track account creation
-    trackEvent('account_created', {
-      account_type: formData.type,
-      account_category: formData.category,
-    });
-
-    // Reset form
-    setFormData({
-      name: '',
-      type: 'asset',
-      category: ACCOUNT_CATEGORIES.asset[0],
-    });
-
-    onSuccess?.();
+    reset();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label htmlFor="accountName" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">
           Account Name
@@ -61,11 +43,9 @@ export const AddAccountForm = ({ onSuccess }: AddAccountFormProps) => {
         <input
           type="text"
           id="accountName"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          {...register('name', { required: true })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
           placeholder="e.g., Checking Account, Credit Card, etc."
-          required
         />
       </div>
 
@@ -75,13 +55,12 @@ export const AddAccountForm = ({ onSuccess }: AddAccountFormProps) => {
         </label>
         <select
           id="accountType"
-          value={formData.type}
-          onChange={(e) => handleTypeChange(e.target.value as AccountType)}
+          {...register('type', { required: true })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
         >
-          <option value="asset">Asset</option>
-          <option value="liability">Liability</option>
-          <option value="equity">Equity</option>
+          {ACCOUNT_TYPES.map(type => <option key={type} value={type}>
+            {type}
+          </option>)}
         </select>
       </div>
 
@@ -91,11 +70,10 @@ export const AddAccountForm = ({ onSuccess }: AddAccountFormProps) => {
         </label>
         <select
           id="accountCategory"
-          value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+          {...register('category', { required: true })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
         >
-          {ACCOUNT_CATEGORIES[formData.type].map((category) => (
+          {ACCOUNT_CATEGORIES[selectedType].map((category) => (
             <option key={category} value={category}>
               {category}
             </option>
@@ -103,11 +81,29 @@ export const AddAccountForm = ({ onSuccess }: AddAccountFormProps) => {
         </select>
       </div>
 
+      <div>
+        <label htmlFor="accountCurrency" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">
+          Currency
+        </label>
+        <select
+          id="accountCurrency"
+          {...register('currency', { required: true })}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
+        >
+          {CURRENCY_OPTIONS.map((currency) => (
+            <option key={currency} value={currency}>
+              {currency}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <button
         type="submit"
+        disabled={isLoading}
         className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 transition-colors"
       >
-        Add Account
+        {isLoading ? 'Adding...' : 'Add Account'}
       </button>
     </form>
   );

@@ -13,6 +13,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
     "@rtk-query/codegen-openapi": "^2.2.0",
+    "@tabler/icons-react": "^3.41.1",
     "@types/mongoose": "^5.11.96",
     "chart.js": "^4.5.0",
     "chartjs-adapter-date-fns": "^3.0.0",
