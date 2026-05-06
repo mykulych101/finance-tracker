@@ -461,6 +461,7 @@ export type AccountRead = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
+  current_balance: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -489,6 +490,7 @@ export type PatchedAccountRead = {
   type?: AccountTypeEnum;
   category?: CategoryEnum;
   currency?: CurrencyEnum;
+  current_balance?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

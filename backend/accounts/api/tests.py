@@ -1,8 +1,10 @@
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.api.factories import AccountFactory
 from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.models import Account
+from balances.api.factories import BalanceRecordFactory
 from core.api.tests import BaseAPITest
 
 
@@ -22,9 +24,35 @@ class AccountTests(BaseAPITest):
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["count"], accounts_count - 1)
-        required_fields = {"id", "name", "type", "category", "currency", "is_active", "created_at", "updated_at"}
+        required_fields = {
+            "id",
+            "name",
+            "type",
+            "category",
+            "currency",
+            "current_balance",
+            "is_active",
+            "created_at",
+            "updated_at",
+        }
         for field in required_fields:
             self.assertIn(field, resp.data["results"][0])
+
+    def test_retrieve_accounts_current_balance_calculation(self):
+        today = timezone.localdate()
+        yesterday = today - timezone.timedelta(days=1)
+        account1 = AccountFactory.create(user=self.user)
+        account2 = AccountFactory.create(user=self.user)
+        BalanceRecordFactory.create(account=account1, date=today, amount=100)
+        BalanceRecordFactory.create(account=account2, date=yesterday, amount=50)
+        url = reverse("account-list")
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        for account_data in resp.data["results"]:
+            if account_data["id"] == account1.id:
+                self.assertEqual(account_data["current_balance"], 100)
+            elif account_data["id"] == account2.id:
+                self.assertEqual(account_data["current_balance"], 50)
 
     def test_retrieve_account_by_id(self):
         account = AccountFactory.create(user=self.user)
@@ -70,6 +98,11 @@ class AccountTests(BaseAPITest):
         resp = self.client.post(url, data)
         self.assertEqual(resp.status_code, 400)
 
+        existing_account.is_active = False
+        existing_account.save(update_fields=["is_active"])
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 201)
+
     def test_update_account_all_fields(self):
         account = AccountFactory.create(user=self.user)
         url = reverse("account-detail", args=(account.id,))
@@ -86,6 +119,24 @@ class AccountTests(BaseAPITest):
         self.assertEqual(account.type, data["type"])
         self.assertEqual(account.category, data["category"])
         self.assertEqual(account.currency, data["currency"])
+
+    def test_update_account_with_same_name(self):
+        account = AccountFactory.create(name="Same Name", user=self.user)
+        url = reverse("account-detail", args=(account.id,))
+        data = {"name": "Same Name"}
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 200)
+        account.refresh_from_db()
+        self.assertEqual(account.name, data["name"])
+
+    def test_update_account_type(self):
+        account = AccountFactory.create(user=self.user)
+        url = reverse("account-detail", args=(account.id,))
+        data = {"type": AccountType.ASSET}
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 200)
+        account.refresh_from_db()
+        self.assertEqual(account.type, data["type"])
 
     def test_update_account_duplicate_name(self):
         account = AccountFactory.create(user=self.user)

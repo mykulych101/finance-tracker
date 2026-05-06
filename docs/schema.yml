@@ -697,6 +697,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        current_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
         is_active:
           type: boolean
           readOnly: true
@@ -712,6 +717,7 @@ components:
       - category
       - created_at
       - currency
+      - current_balance
       - id
       - is_active
       - name
@@ -919,6 +925,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        current_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
         is_active:
           type: boolean
           readOnly: true
