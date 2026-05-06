@@ -244,7 +244,7 @@ log_success "All services running!"
 log_info "Performing health check..."
 
 # Check if Django is responding
-HEALTH_CHECK_OUTPUT=$(docker compose -f "$COMPOSE_FILE" exec -T django bash -c "cd /opt/project/src && poetry run python manage.py check --deploy" 2>&1) || {
+HEALTH_CHECK_OUTPUT=$(docker compose -f "$COMPOSE_FILE" exec -T django bash -c "cd /opt/project/backend && poetry run python manage.py check --deploy" 2>&1) || {
     log_error "Django health check failed!"
     log_error "Health check output:"
     echo "$HEALTH_CHECK_OUTPUT"

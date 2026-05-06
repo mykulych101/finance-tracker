@@ -3,6 +3,7 @@
     "language": "en",
     "words": [
         "greenmask",
+        "codegen",
         "mkdocs",
         "venv",
         "celeryworker",
@@ -12,6 +13,7 @@
         "PYTHONPATH",
         "PGUSER",
         "PGPASSWORD",
-        "DBNAME"
+        "DBNAME",
+        "simplejwt"
     ]
 }

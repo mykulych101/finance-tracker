@@ -28,7 +28,7 @@ tasks:
       - docker compose -f compose.prod.yml run --rm greenmask restore latest --config /var/lib/workdir/config.yaml
   dev.manage:
     desc: "Run Django management commands"
-    dir: src
+    dir: backend
     cmds:
       - poetry run python manage.py {{.CLI_ARGS}}
   dev.up:
@@ -41,21 +41,45 @@ tasks:
     cmds:
       - docker compose -f compose.dev.yml down --remove-orphans
   dev.api:
-    desc: "Generate API specification from BE"
-    dir: src
+    desc: "Generate API specification"
     cmds:
+      - task dev.api.be
+      - task dev.api.fe
+  dev.api.be:
+    desc: "Generate API specification from BE"
+    dir: backend
+    cmds:
+      - poetry run python manage.py spectacular --color --urlconf 'config.urls' --custom-settings core.api.api_settings --file ../docs/schema.yml --validate --fail-on-warn
       - poetry run python manage.py show_urls --format=pretty-json > ../docs/urls.json
+  dev.api.fe:
+    desc: "Generate API specification for FE"
+    dir: frontend
+    cmds:
+      - yarn run api
   dev.coverage:
     env:
       DISABLE_EXTERNAL_API_CALLS: "1"
       DJANGO_SETTINGS_MODULE: "config.settings.test"
-    dir: src
+    dir: backend
     cmds:
       - poetry run coverage run manage.py test -b
       - poetry run coverage report -m
       - poetry run coverage xml
       - poetry run genbadge coverage -i coverage.xml -o ../docs/coverage.svg
-  dev.format:
-    desc: "Format code with ruff"
+  dev.lint:
+    desc: "Format code"
     cmds:
-      - ruff check --fix .
+      - task dev.lint.be
+      - task dev.lint.fe
+  dev.lint.be:
+    desc: "Format code with ruff"
+    dir: backend
+    cmds:
+      - poetry run ruff check . --fix
+      - poetry run ruff format
+  dev.lint.fe:
+    desc: "Format code with eslint and prettier"
+    dir: frontend
+    cmds:
+      - yarn run format
+      - yarn run build

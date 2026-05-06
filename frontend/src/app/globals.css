@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode for manual toggle support */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #e5e5e5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  *,
+  *::before,
+  *::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, fill 0.3s ease, stroke 0.3s ease;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Darker placeholder text for better visibility */
+input::placeholder,
+input[type="text"]::placeholder,
+input[type="number"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="search"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="url"]::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+  /* gray-500 */
+  opacity: 1 !important;
+}
+
+.dark input::placeholder,
+.dark input[type="text"]::placeholder,
+.dark input[type="number"]::placeholder,
+.dark input[type="email"]::placeholder,
+.dark input[type="password"]::placeholder,
+.dark input[type="search"]::placeholder,
+.dark input[type="tel"]::placeholder,
+.dark input[type="url"]::placeholder,
+.dark textarea::placeholder {
+  color: #9ca3af !important;
+  /* gray-400 */
+  opacity: 1 !important;
+}
+
+/* Ensure placeholder is visible in Firefox */
+input::-moz-placeholder,
+input[type="text"]::-moz-placeholder,
+input[type="number"]::-moz-placeholder,
+input[type="email"]::-moz-placeholder,
+input[type="password"]::-moz-placeholder,
+input[type="search"]::-moz-placeholder,
+input[type="tel"]::-moz-placeholder,
+input[type="url"]::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.dark input::-moz-placeholder,
+.dark input[type="text"]::-moz-placeholder,
+.dark input[type="number"]::-moz-placeholder,
+.dark input[type="email"]::-moz-placeholder,
+.dark input[type="password"]::-moz-placeholder,
+.dark input[type="search"]::-moz-placeholder,
+.dark input[type="tel"]::-moz-placeholder,
+.dark input[type="url"]::-moz-placeholder,
+.dark textarea::-moz-placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
+
+/* Webkit browsers */
+input::-webkit-input-placeholder,
+input[type="text"]::-webkit-input-placeholder,
+input[type="number"]::-webkit-input-placeholder,
+input[type="email"]::-webkit-input-placeholder,
+input[type="password"]::-webkit-input-placeholder,
+input[type="search"]::-webkit-input-placeholder,
+input[type="tel"]::-webkit-input-placeholder,
+input[type="url"]::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: #6b7280 !important;
+}
+
+.dark input::-webkit-input-placeholder,
+.dark input[type="text"]::-webkit-input-placeholder,
+.dark input[type="number"]::-webkit-input-placeholder,
+.dark input[type="email"]::-webkit-input-placeholder,
+.dark input[type="password"]::-webkit-input-placeholder,
+.dark input[type="search"]::-webkit-input-placeholder,
+.dark input[type="tel"]::-webkit-input-placeholder,
+.dark input[type="url"]::-webkit-input-placeholder,
+.dark textarea::-webkit-input-placeholder {
+  color: #9ca3af !important;
+}
+
+/* Microsoft Edge */
+input::-ms-input-placeholder,
+input[type="text"]::-ms-input-placeholder,
+input[type="number"]::-ms-input-placeholder,
+input[type="email"]::-ms-input-placeholder,
+input[type="password"]::-ms-input-placeholder,
+input[type="search"]::-ms-input-placeholder,
+input[type="tel"]::-ms-input-placeholder,
+input[type="url"]::-ms-input-placeholder,
+textarea::-ms-input-placeholder {
+  color: #6b7280 !important;
+}
+
+.dark input::-ms-input-placeholder,
+.dark input[type="text"]::-ms-input-placeholder,
+.dark input[type="number"]::-ms-input-placeholder,
+.dark input[type="email"]::-ms-input-placeholder,
+.dark input[type="password"]::-ms-input-placeholder,
+.dark input[type="search"]::-ms-input-placeholder,
+.dark input[type="tel"]::-ms-input-placeholder,
+.dark input[type="url"]::-ms-input-placeholder,
+.dark textarea::-ms-input-placeholder {
+  color: #9ca3af !important;
+}
+
+/* Select styling for better consistency */
+select {
+  color: #374151;
+  /* gray-700 for better readability */
+}
+
+.dark select {
+  color: #e5e7eb;
+  /* gray-200 */
+}
+
+/* Style select when no option is selected (acts like placeholder) */
+select:invalid {
+  color: #6b7280;
+  /* gray-500 to match placeholder color */
+}
+
+.dark select:invalid {
+  color: #9ca3af;
+}
+
+/* Ensure first option (often used as placeholder) has placeholder styling */
+select option:first-child {
+  color: #6b7280;
+}
+
+/* Normal options should have normal text color */
+select option:not(:first-child) {
+  color: #374151;
+}
+
+.dark select option:first-child {
+  color: #9ca3af;
+}
+
+.dark select option:not(:first-child) {
+  color: #e5e7eb;
+}
+
+/* Darker text color for input values (not placeholders) */
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea {
+  color: #1f2937 !important;
+  /* gray-800 for better contrast */
+}
+
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"],
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark textarea {
+  color: #f3f4f6 !important;
+  /* gray-100 */
+}
+
+/* Ensure input text is dark and readable */
+input:not(:placeholder-shown) {
+  color: #1f2937 !important;
+  /* gray-800 when input has value */
+}
+
+.dark input:not(:placeholder-shown) {
+  color: #f3f4f6 !important;
+  /* gray-100 */
+}
