@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -284,6 +285,12 @@ class BalanceRecordTests(BaseAPITest):
         self.client.logout()
         resp = self.client.get(self.list_url)
         self.assertEqual(resp.status_code, 401)
+
+    def test_no_recursion_balance_record_create_does_not_trigger_recalculate(self):
+        with patch("transactions.api.services.recalculate_balance_on_date") as mock:
+            resp = self.client.post(self.list_url, self.default_data)
+            self.assertEqual(resp.status_code, 201)
+            mock.assert_not_called()
 
     def _assert_balance_records_amounts(
         self,

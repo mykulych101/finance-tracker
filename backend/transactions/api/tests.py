@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -469,6 +470,26 @@ class TransactionTests(BaseAPITest):
         resp = self.client.delete(url)
         self.assertEqual(resp.status_code, 404)
         self.assertTrue(Transaction.objects.filter(id=transaction.id).exists())
+
+    def test_no_recursion_transaction_create_recalculates_exactly_once(self):
+        import balances.api.services as svc
+
+        today = timezone.localdate().isoformat()
+        target = "transactions.api.services.recalculate_balance_on_date"
+        with patch(target, wraps=svc.recalculate_balance_on_date) as mock:
+            resp = self.client.post(
+                reverse("transactions-list"),
+                {
+                    "account_id": self.account.id,
+                    "type": TransactionType.INCOME,
+                    "amount": 50,
+                    "date": today,
+                    "description": "Test",
+                    "raw_category": "Salary",
+                },
+            )
+            self.assertEqual(resp.status_code, 201)
+            self.assertEqual(mock.call_count, 1)
 
     def _assert_transaction_fields(self, transaction: Transaction, data: dict):
         self.assertEqual(transaction.account, self.account)
