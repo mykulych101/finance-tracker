@@ -156,6 +156,32 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/accounts/{id}/import_transaction/:
+    post:
+      operationId: accounts_import_transaction_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Account.
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/activate/{uidb64}/{token}/:
     get:
       operationId: activate_retrieve

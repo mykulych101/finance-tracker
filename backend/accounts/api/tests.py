@@ -1,3 +1,7 @@
+from datetime import date
+from decimal import Decimal
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django.utils import timezone
 
@@ -5,7 +9,10 @@ from accounts.api.factories import AccountFactory
 from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.models import Account
 from balances.api.factories import BalanceRecordFactory
+from balances.models import BalanceRecord
 from core.api.tests import BaseAPITest
+from transactions.constants import TransactionType
+from transactions.models import Transaction
 
 
 class AccountTests(BaseAPITest):
@@ -207,3 +214,62 @@ class AccountTests(BaseAPITest):
         self.assertEqual(resp.status_code, 204)
         account.refresh_from_db()
         self.assertFalse(account.is_active)
+
+
+class ImportTransactionTests(BaseAPITest):
+    CSV_HEADER = "Date and time,Description,Amount,Category"
+
+    def setUp(self):
+        self.user = self.create_and_login()
+        self.account = AccountFactory.create(user=self.user)
+        self.url = reverse("account-import-transaction", args=(self.account.id,))
+
+    def _make_csv(self, *rows):
+        content = "\n".join([self.CSV_HEADER, *rows]).encode("utf-8")
+        return SimpleUploadedFile("transactions.csv", content, content_type="text/csv")
+
+    def test_import_success(self):
+        file = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+            "23.04.2026 12:00:00,Coffee,-50.00,Food",
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 2)
+
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 2)
+
+        income = Transaction.objects.get(account=self.account, type=TransactionType.INCOME)
+        self.assertEqual(income.amount, Decimal("1000.00"))
+        self.assertEqual(income.description, "Salary")
+        self.assertEqual(income.date, date(2026, 4, 22))
+        self.assertEqual(income.raw_category, "Electronics")
+
+        expense = Transaction.objects.get(account=self.account, type=TransactionType.EXPENSE)
+        self.assertEqual(expense.amount, Decimal("50.00"))
+        self.assertEqual(expense.date, date(2026, 4, 23))
+        self.assertEqual(expense.description, "Coffee")
+        self.assertEqual(expense.raw_category, "Food")
+
+        balance_record = BalanceRecord.objects.filter(account=self.account).first()
+        self.assertIsNotNone(balance_record)
+        self.assertEqual(balance_record.amount, Decimal("950.00"))
+        self.assertEqual(balance_record.date, date(2026, 4, 23))
+
+    def test_import_missing_amount(self):
+        file = self._make_csv("01.01.2026 10:00:00,Salary,,Electronics")
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_missing_date(self):
+        file = self._make_csv(",Salary,1000.00,Electronics")
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_invalid_date(self):
+        file = self._make_csv("not-a-date,Salary,1000.00,Electronics")
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)

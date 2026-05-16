@@ -76,6 +76,17 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ["accounts"],
       }),
+      accountsImportTransactionCreate: build.mutation<
+        AccountsImportTransactionCreateApiResponse,
+        AccountsImportTransactionCreateApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/accounts/${queryArg.id}/import_transaction/`,
+          method: "POST",
+          body: queryArg.body,
+        }),
+        invalidatesTags: ["accounts"],
+      }),
       activateRetrieve: build.query<
         ActivateRetrieveApiResponse,
         ActivateRetrieveApiArg
@@ -329,6 +340,14 @@ export type AccountsDestroyApiResponse = unknown;
 export type AccountsDestroyApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
+};
+export type AccountsImportTransactionCreateApiResponse = unknown;
+export type AccountsImportTransactionCreateApiArg = {
+  /** A unique integer value identifying this Account. */
+  id: number;
+  body: {
+    file?: Blob;
+  };
 };
 export type ActivateRetrieveApiResponse = unknown;
 export type ActivateRetrieveApiArg = {
@@ -700,6 +719,7 @@ export const {
   useAccountsUpdateMutation,
   useAccountsPartialUpdateMutation,
   useAccountsDestroyMutation,
+  useAccountsImportTransactionCreateMutation,
   useActivateRetrieveQuery,
   useBalancesListQuery,
   useBalancesCreateMutation,

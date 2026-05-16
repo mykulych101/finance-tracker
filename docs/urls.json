@@ -468,6 +468,18 @@
         "decorators": ""
     },
     {
+        "url": "/api/accounts/<pk>/import_transaction/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-import-transaction",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/<pk>/import_transaction\\.<format>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-import-transaction",
+        "decorators": ""
+    },
+    {
         "url": "/api/",
         "module": "rest_framework.routers.APIRootView",
         "name": "api-root",
