@@ -17,6 +17,7 @@
         "simplejwt",
         "tabler",
         "dateutil",
-        "dayfirst"
+        "dayfirst",
+        "filterset"
     ]
 }

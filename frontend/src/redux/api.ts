@@ -100,6 +100,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/balances/`,
           params: {
+            date: queryArg.date,
             page: queryArg.page,
             page_size: queryArg.pageSize,
           },
@@ -134,11 +135,27 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ["balances"],
       }),
+      balancesBulkCreateCreate: build.mutation<
+        BalancesBulkCreateCreateApiResponse,
+        BalancesBulkCreateCreateApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/balances/bulk-create/`,
+          method: "POST",
+          body: queryArg.body,
+        }),
+        invalidatesTags: ["balances"],
+      }),
       balancesLatestRetrieve: build.query<
         BalancesLatestRetrieveApiResponse,
         BalancesLatestRetrieveApiArg
       >({
-        query: () => ({ url: `/api/balances/latest/` }),
+        query: (queryArg) => ({
+          url: `/api/balances/latest/`,
+          params: {
+            date: queryArg.date,
+          },
+        }),
         providesTags: ["balances"],
       }),
       changePasswordUpdate: build.mutation<
@@ -357,6 +374,7 @@ export type ActivateRetrieveApiArg = {
 export type BalancesListApiResponse =
   /** status 200  */ PaginatedBalanceRecordListRead;
 export type BalancesListApiArg = {
+  date?: string;
   /** A page number within the paginated result set. */
   page?: number;
   /** Number of results to return per page. */
@@ -376,9 +394,15 @@ export type BalancesDestroyApiArg = {
   /** A unique integer value identifying this Balance Record. */
   id: number;
 };
+export type BalancesBulkCreateCreateApiResponse = unknown;
+export type BalancesBulkCreateCreateApiArg = {
+  body: BalanceRecord[];
+};
 export type BalancesLatestRetrieveApiResponse =
   /** status 200  */ BalanceRecordRead;
-export type BalancesLatestRetrieveApiArg = void;
+export type BalancesLatestRetrieveApiArg = {
+  date?: string;
+};
 export type ChangePasswordUpdateApiResponse = /** status 200  */ ChangePassword;
 export type ChangePasswordUpdateApiArg = {
   changePassword: ChangePassword;
@@ -725,6 +749,7 @@ export const {
   useBalancesCreateMutation,
   useBalancesRetrieveQuery,
   useBalancesDestroyMutation,
+  useBalancesBulkCreateCreateMutation,
   useBalancesLatestRetrieveQuery,
   useChangePasswordUpdateMutation,
   useChangePasswordPartialUpdateMutation,

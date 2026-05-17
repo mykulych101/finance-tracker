@@ -504,6 +504,18 @@
         "decorators": ""
     },
     {
+        "url": "/api/balances/bulk-create/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-bulk-create",
+        "decorators": ""
+    },
+    {
+        "url": "/api/balances/bulk-create\\.<format>/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-bulk-create",
+        "decorators": ""
+    },
+    {
         "url": "/api/balances/latest/",
         "module": "balances.api.views.BalanceRecordViewSet",
         "name": "balances-latest",

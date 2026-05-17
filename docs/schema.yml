@@ -210,6 +210,11 @@ paths:
     get:
       operationId: balances_list
       parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
       - name: page
         required: false
         in: query
@@ -295,9 +300,44 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/balances/bulk-create/:
+    post:
+      operationId: balances_bulk_create_create
+      description: Bulk create balance records.
+      tags:
+      - balances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceRecord'
+          multipart/form-data:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceRecord'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
   /api/balances/latest/:
     get:
       operationId: balances_latest_retrieve
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
       tags:
       - balances
       security:

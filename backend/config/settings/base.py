@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "balances",
     "transactions",
     "import_export",
+    "django_filters",
 ]
 
 if SENTRY_DSN and SENTRY_DSN.strip() and SENTRY_DSN.strip().startswith(("http://", "https://")):

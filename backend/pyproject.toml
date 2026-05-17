@@ -40,6 +40,7 @@ watchfiles = "^0.24"
 werkzeug = "^3.0"
 whitenoise = "^6.6"
 django-import-export = "^4.4.1"
+django-filter = "^25.2"
 
 [tool.poetry.group.dev.dependencies]
 django-debug-toolbar = "^4.2"
