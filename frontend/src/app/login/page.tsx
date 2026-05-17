@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
+import PublicOnlyRoute from '@/components/PublicOnlyRoute';
 
 export default function LoginPage() {
   const [login, { isLoading }] = useLoginCreateMutation()
@@ -18,6 +19,7 @@ export default function LoginPage() {
   }
 
   return (
+    <PublicOnlyRoute>
     <div className="flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md dark:shadow-neutral-900/50 p-8">
@@ -77,5 +79,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </PublicOnlyRoute>
   );
 }
