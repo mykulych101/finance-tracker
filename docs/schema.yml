@@ -182,6 +182,33 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/accounts/autocomplete/:
+    get:
+      operationId: accounts_autocomplete_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAccountSlimList'
+          description: ''
   /api/activate/{uidb64}/{token}/:
     get:
       operationId: activate_retrieve
@@ -598,6 +625,45 @@ paths:
     get:
       operationId: transactions_list
       parameters:
+      - in: query
+        name: account
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: amount_max
+        schema:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      - in: query
+        name: amount_min
+        schema:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      - in: query
+        name: date_after
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_before
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: is_system
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -610,6 +676,20 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: raw_category
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - expense
+          - income
+        description: |-
+          * `income` - Income
+          * `expense` - Expense
       tags:
       - transactions
       security:
@@ -930,6 +1010,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Account'
+    PaginatedAccountSlimList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountSlim'
     PaginatedBalanceRecordList:
       type: object
       required:

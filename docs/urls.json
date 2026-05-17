@@ -456,6 +456,18 @@
         "decorators": ""
     },
     {
+        "url": "/api/accounts/autocomplete/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-autocomplete",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/autocomplete\\.<format>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-autocomplete",
+        "decorators": ""
+    },
+    {
         "url": "/api/accounts/<pk>/",
         "module": "accounts.api.views.AccountViewSet",
         "name": "account-detail",

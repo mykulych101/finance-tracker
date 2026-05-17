@@ -78,6 +78,17 @@ class AccountTests(BaseAPITest):
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 404)
 
+    def test_autocomplete_accounts(self):
+        accounts_count = 5
+        AccountFactory.create_batch(accounts_count, user=self.user)
+        url = reverse("account-autocomplete")
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], accounts_count)
+        required_fields = {"id", "name"}
+        for field in required_fields:
+            self.assertIn(field, resp.data["results"][0])
+
     def test_create_account(self):
         url = reverse("account-list")
         data = {

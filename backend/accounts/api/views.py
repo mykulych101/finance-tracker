@@ -9,13 +9,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from accounts.api.serializers import AccountSerializer
+from accounts.api.serializers import AccountSerializer, AccountSlimSerializer
 from accounts.models import Account
 from transactions.api.resources import TransactionResource
 
 
 class AccountViewSet(ModelViewSet):
     serializer_class = AccountSerializer
+    autocomplete_serializer_class = AccountSlimSerializer
     permission_classes = [IsAuthenticated]
     queryset = Account.objects.all()
 
@@ -25,6 +26,11 @@ class AccountViewSet(ModelViewSet):
     def perform_destroy(self, instance):
         instance.is_active = False
         instance.save(update_fields=["is_active"])
+
+    @extend_schema(responses={200: AccountSlimSerializer(many=True)})
+    @action(detail=False, methods=["GET"], serializer_class=AccountSlimSerializer)
+    def autocomplete(self, request, *args, **kwargs):
+        return self.list(self.request, *args, **kwargs)
 
     @atomic
     @extend_schema(
