@@ -26,6 +26,7 @@ const Navigation = () => {
     { href: '/record-balances', label: 'Record Balances', icon: '💰' },
     { href: '/bank-statements', label: 'Bank Statements', icon: '🏦' },
     { href: '/historical', label: 'Historical Tracking', icon: '📈' },
+    { href: '/transactions', label: 'Transactions', icon: '💳' },
   ];
 
   const toggleMobileMenu = () => {
