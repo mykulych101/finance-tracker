@@ -456,6 +456,18 @@
         "decorators": ""
     },
     {
+        "url": "/api/accounts/autocomplete/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-autocomplete",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/autocomplete\\.<format>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-autocomplete",
+        "decorators": ""
+    },
+    {
         "url": "/api/accounts/<pk>/",
         "module": "accounts.api.views.AccountViewSet",
         "name": "account-detail",
@@ -465,6 +477,18 @@
         "url": "/api/accounts/<pk>\\.<format>/",
         "module": "accounts.api.views.AccountViewSet",
         "name": "account-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/<pk>/import_transaction/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-import-transaction",
+        "decorators": ""
+    },
+    {
+        "url": "/api/accounts/<pk>/import_transaction\\.<format>/",
+        "module": "accounts.api.views.AccountViewSet",
+        "name": "account-import-transaction",
         "decorators": ""
     },
     {
@@ -489,6 +513,18 @@
         "url": "/api/balances\\.<format>/",
         "module": "balances.api.views.BalanceRecordViewSet",
         "name": "balances-list",
+        "decorators": ""
+    },
+    {
+        "url": "/api/balances/bulk-create/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-bulk-create",
+        "decorators": ""
+    },
+    {
+        "url": "/api/balances/bulk-create\\.<format>/",
+        "module": "balances.api.views.BalanceRecordViewSet",
+        "name": "balances-bulk-create",
         "decorators": ""
     },
     {

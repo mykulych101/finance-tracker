@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -469,6 +470,91 @@ class TransactionTests(BaseAPITest):
         resp = self.client.delete(url)
         self.assertEqual(resp.status_code, 404)
         self.assertTrue(Transaction.objects.filter(id=transaction.id).exists())
+
+    def test_no_recursion_transaction_create_recalculates_exactly_once(self):
+        import balances.api.services as svc
+
+        today = timezone.localdate().isoformat()
+        target = "transactions.api.services.recalculate_balance_on_date"
+        with patch(target, wraps=svc.recalculate_balance_on_date) as mock:
+            resp = self.client.post(
+                reverse("transactions-list"),
+                {
+                    "account_id": self.account.id,
+                    "type": TransactionType.INCOME,
+                    "amount": 50,
+                    "date": today,
+                    "description": "Test",
+                    "raw_category": "Salary",
+                },
+            )
+            self.assertEqual(resp.status_code, 201)
+            self.assertEqual(mock.call_count, 1)
+
+    def test_filter_by_account(self):
+        another_account = AccountFactory.create(user=self.user)
+        TransactionFactory.create_batch(3, account=self.account)
+        TransactionFactory.create_batch(2, account=another_account)
+        resp = self.client.get(f"{self.list_url}?account={self.account.id}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 3)
+        for t in resp.data["results"]:
+            self.assertEqual(t["account"]["id"], self.account.id)
+
+    def test_filter_by_type(self):
+        TransactionFactory.create_batch(3, account=self.account, type=TransactionType.INCOME)
+        TransactionFactory.create_batch(2, account=self.account, type=TransactionType.EXPENSE)
+        resp = self.client.get(f"{self.list_url}?type={TransactionType.INCOME}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 3)
+        for t in resp.data["results"]:
+            self.assertEqual(t["type"], TransactionType.INCOME)
+
+    def test_filter_by_amount_range(self):
+        TransactionFactory.create(account=self.account, amount=Decimal("10.00"), date="2024-01-01")
+        TransactionFactory.create(account=self.account, amount=Decimal("50.00"), date="2024-01-01")
+        TransactionFactory.create(account=self.account, amount=Decimal("150.00"), date="2024-01-01")
+        resp = self.client.get(f"{self.list_url}?amount_min=20&amount_max=100")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertEqual(Decimal(resp.data["results"][0]["amount"]), Decimal("50.00"))
+
+    def test_filter_by_date_range(self):
+        TransactionFactory.create(account=self.account, amount=Decimal("10.00"), date="2024-01-01")
+        TransactionFactory.create(account=self.account, amount=Decimal("20.00"), date="2024-03-15")
+        TransactionFactory.create(account=self.account, amount=Decimal("30.00"), date="2024-06-30")
+        resp = self.client.get(f"{self.list_url}?date_after=2024-02-01&date_before=2024-05-01")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertEqual(Decimal(resp.data["results"][0]["amount"]), Decimal("20.00"))
+
+    def test_filter_by_description(self):
+        TransactionFactory.create(account=self.account, description="Salary payment")
+        TransactionFactory.create(account=self.account, description="Grocery store")
+        resp = self.client.get(f"{self.list_url}?description=salary")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertIn("Salary", resp.data["results"][0]["description"])
+
+    def test_filter_by_raw_category(self):
+        TransactionFactory.create(account=self.account, raw_category="Food")
+        TransactionFactory.create(account=self.account, raw_category="Transport")
+        resp = self.client.get(f"{self.list_url}?raw_category=foo")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertEqual(resp.data["results"][0]["raw_category"], "Food")
+
+    def test_filter_by_is_system(self):
+        TransactionFactory.create(account=self.account, is_system=False)
+        TransactionFactory.create(account=self.account, is_system=True)
+        resp = self.client.get(f"{self.list_url}?is_system=true")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertTrue(resp.data["results"][0]["is_system"])
+        resp = self.client.get(f"{self.list_url}?is_system=false")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertFalse(resp.data["results"][0]["is_system"])
 
     def _assert_transaction_fields(self, transaction: Transaction, data: dict):
         self.assertEqual(transaction.account, self.account)

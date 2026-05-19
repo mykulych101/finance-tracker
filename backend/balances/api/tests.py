@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -118,6 +119,39 @@ class BalanceRecordTests(BaseAPITest):
         self.assertEqual(transaction.amount, today_amount - yesterday_amount)
         self.assertEqual(transaction.type, TransactionType.INCOME)
 
+    def test_create_bulk_balance_records(self):
+        url = reverse("balances-bulk-create")
+        records = [
+            {"account": self.account.id, "amount": 100.0, "date": "2024-01-01", "note": "First"},
+            {"account": self.account.id, "amount": 200.0, "date": "2024-02-01", "note": "Second"},
+            {"account": self.account.id, "amount": 300.0, "date": "2024-03-01", "note": "Third"},
+        ]
+        resp = self.client.post(url, records, format="json")
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(len(resp.data), len(records))
+        self.assertEqual(BalanceRecord.objects.filter(account=self.account).count(), len(records))
+        amounts = {Decimal(str(r["amount"])) for r in records}
+        self.assertEqual({Decimal(r["amount"]) for r in resp.data}, amounts)
+
+    def test_create_bulk_balance_records_with_invalid_account(self):
+        url = reverse("balances-bulk-create")
+        records = [
+            {"account": self.account.id, "amount": 100.0, "date": "2024-01-01", "note": "Valid"},
+            {"account": self.other_user_account.id, "amount": 200.0, "date": "2024-02-01", "note": "Invalid"},
+        ]
+        resp = self.client.post(url, records, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(BalanceRecord.objects.count(), 0)
+
+    def test_create_bulk_balance_records_missing_fields(self):
+        url = reverse("balances-bulk-create")
+        records = [
+            {"account": self.account.id, "date": "2024-01-01"},
+        ]
+        resp = self.client.post(url, records, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("amount", resp.data[0])
+
     def test_non_system_transaction_updates_balance_record(self):
         yesterday = (timezone.localdate() - timedelta(days=1)).isoformat()
         today = timezone.localdate().isoformat()
@@ -233,6 +267,17 @@ class BalanceRecordTests(BaseAPITest):
         self.assertEqual(transaction.amount, expected_delta)
         self.assertEqual(transaction.type, TransactionType.EXPENSE)
 
+    def test_create_balance_record_duplicate_date_without_note(self):
+        self.client.post(self.list_url, self.default_data)
+        resp = self.client.post(
+            self.list_url,
+            {"account": self.account.id, "amount": 50.0, "date": self.default_data["date"]},
+        )
+        self.assertEqual(resp.status_code, 201)
+        balance = BalanceRecord.objects.get(account=self.account, date=self.default_data["date"])
+        self.assertEqual(balance.amount, 50)
+        self.assertEqual(balance.note, "")
+
     def test_create_balance_record_with_future_date(self):
         future_date = (timezone.localdate() + timedelta(days=1)).isoformat()
         data = self.default_data.copy()
@@ -284,6 +329,45 @@ class BalanceRecordTests(BaseAPITest):
         self.client.logout()
         resp = self.client.get(self.list_url)
         self.assertEqual(resp.status_code, 401)
+
+    def test_no_recursion_balance_record_create_does_not_trigger_recalculate(self):
+        with patch("transactions.api.services.recalculate_balance_on_date") as mock:
+            resp = self.client.post(self.list_url, self.default_data)
+            self.assertEqual(resp.status_code, 201)
+            mock.assert_not_called()
+
+    def test_filter_by_date(self):
+        balance1 = BalanceRecordFactory.create(account=self.account, date="2024-04-20")
+        BalanceRecordFactory.create(account=self.account, date="2024-04-26")
+        url = reverse("balances-list")
+        resp = self.client.get(f"{url}?date=2024-04-20")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 1)
+        self.assertEqual(resp.data["results"][0]["id"], balance1.id)
+        resp = self.client.get(f"{url}?date=2024-04-27")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 0)
+
+    def test_filter_latest_balance_records_by_date(self):
+        accounts_count = 2
+        accounts = AccountFactory.create_batch(accounts_count, user=self.user)
+        for account in accounts:
+            BalanceRecordFactory.create(account=account, amount=100.0, date="2026-04-20")
+            BalanceRecordFactory.create(account=account, amount=200.0, date="2026-04-24")
+
+        url = reverse("balances-latest")
+        # Filter matches the latest records' date → returns results
+        resp = self.client.get(f"{url}?date=2026-04-24")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data), accounts_count)
+        for record in resp.data:
+            self.assertEqual(record["amount"], "200.00")
+            self.assertEqual(record["date"], "2026-04-24")
+
+        # Filter does NOT match → returns nothing
+        resp = self.client.get(f"{url}?date=2026-04-20")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data), 0)
 
     def _assert_balance_records_amounts(
         self,

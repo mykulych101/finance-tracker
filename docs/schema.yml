@@ -156,6 +156,59 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/accounts/{id}/import_transaction/:
+    post:
+      operationId: accounts_import_transaction_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Account.
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/autocomplete/:
+    get:
+      operationId: accounts_autocomplete_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAccountSlimList'
+          description: ''
   /api/activate/{uidb64}/{token}/:
     get:
       operationId: activate_retrieve
@@ -184,6 +237,11 @@ paths:
     get:
       operationId: balances_list
       parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
       - name: page
         required: false
         in: query
@@ -269,9 +327,44 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/balances/bulk-create/:
+    post:
+      operationId: balances_bulk_create_create
+      description: Bulk create balance records.
+      tags:
+      - balances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceRecord'
+          multipart/form-data:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BalanceRecord'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
   /api/balances/latest/:
     get:
       operationId: balances_latest_retrieve
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
       tags:
       - balances
       security:
@@ -532,6 +625,45 @@ paths:
     get:
       operationId: transactions_list
       parameters:
+      - in: query
+        name: account
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: amount_max
+        schema:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      - in: query
+        name: amount_min
+        schema:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      - in: query
+        name: date_after
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: date_before
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: is_system
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -544,6 +676,20 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: raw_category
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - expense
+          - income
+        description: |-
+          * `income` - Income
+          * `expense` - Expense
       tags:
       - transactions
       security:
@@ -697,6 +843,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        current_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
         is_active:
           type: boolean
           readOnly: true
@@ -712,6 +863,7 @@ components:
       - category
       - created_at
       - currency
+      - current_balance
       - id
       - is_active
       - name
@@ -858,6 +1010,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Account'
+    PaginatedAccountSlimList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountSlim'
     PaginatedBalanceRecordList:
       type: object
       required:
@@ -919,6 +1094,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        current_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
         is_active:
           type: boolean
           readOnly: true

@@ -1,58 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { useFinance } from '@/context/FinanceContext';
-import { Account, AccountWithBalance } from '@/types/finance';
 import { useCurrency } from '@/context/CurrencyContext';
 import { CurrencySelector } from './CurrencySelector';
 import WelcomeScreen from './WelcomeScreen';
 import { ManageAccountModal } from './ManageAccountModal';
 import { ConfirmationModal } from './ui/ConfirmationModal';
+import { AccountRead, useAccountsDestroyMutation, useAccountsListQuery, } from '@/redux/api';
+import { allPages } from '@/constants/constants';
+import { toast } from 'sonner';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
 
-export const BalanceSheet = () => {
-  const { getAccountsWithBalances, deleteAccount, updateAccount, isLoading } = useFinance();
+const AccountSection = ({ title, accounts, total, type, isDestroying, setEditingAccount, setAccountToDelete }: {
+  title: string;
+  accounts: Record<string, AccountRead[]>;
+  total: number;
+  type: 'asset' | 'liability' | 'equity';
+  isDestroying?: boolean;
+  setEditingAccount: (account: AccountRead) => void;
+  setAccountToDelete: (account: AccountRead) => void;
+}) => {
   const { formatCurrency } = useCurrency();
-  const accountsWithBalances = getAccountsWithBalances();
-  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
-
-  const handleSaveAccount = (updates: Pick<Account, 'name' | 'category' | 'type'>) => {
-    if (!editingAccount) return;
-    updateAccount(editingAccount.id, updates);
-    setEditingAccount(null);
-  };
-
-  const groupAccountsByType = (accounts: AccountWithBalance[]) => {
-    return accounts.reduce((groups, account) => {
-      if (!groups[account.type]) {
-        groups[account.type] = {};
-      }
-      if (!groups[account.type][account.category]) {
-        groups[account.type][account.category] = [];
-      }
-      groups[account.type][account.category].push(account);
-      return groups;
-    }, {} as Record<string, Record<string, AccountWithBalance[]>>);
-  };
-
-  const calculateTotalByType = (accounts: AccountWithBalance[], type: string) => {
-    return accounts
-      .filter(account => account.type === type)
-      .reduce((total, account) => total + account.currentBalance, 0);
-  };
-
-  const groupedAccounts = groupAccountsByType(accountsWithBalances);
-  const totalAssets = calculateTotalByType(accountsWithBalances, 'asset');
-  const totalLiabilities = calculateTotalByType(accountsWithBalances, 'liability');
-  const totalEquity = calculateTotalByType(accountsWithBalances, 'equity');
-  const netWorth = totalAssets - totalLiabilities;
-
-  const AccountSection = ({ title, accounts, total, type }: {
-    title: string;
-    accounts: Record<string, AccountWithBalance[]>;
-    total: number;
-    type: 'asset' | 'liability' | 'equity';
-  }) => (
+  return (
     <div className="mb-8">
       <h2 className="text-xl font-bold text-gray-800 dark:text-neutral-100 mb-4 pb-2 border-b border-gray-300 dark:border-neutral-600">
         {title}
@@ -67,24 +36,26 @@ export const BalanceSheet = () => {
                 className="flex justify-between items-center py-2 px-3 bg-gray-50 dark:bg-neutral-700/50 rounded hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
               >
                 <span className="text-gray-800 dark:text-neutral-200">{account.name}</span>
-                <div className="flex items-center space-x-2">
-                  <span className={`font-medium ${account.currentBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                <div className="flex items-center">
+                  <span className={`mr-2 font-medium ${parseFloat(account.current_balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
-                    {formatCurrency(account.currentBalance)}
+                    {formatCurrency(parseFloat(account.current_balance))}
                   </span>
                   <button
                     onClick={() => setEditingAccount(account)}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                     title="Edit account"
                   >
-                    Edit
+                    <IconEdit />
                   </button>
                   <button
-                    onClick={() => deleteAccount(account.id)}
+                    // onClick={() => onDeleteAccount(account.id)}
+                    onClick={() => setAccountToDelete(account)}
                     className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                     title="Delete account"
+                    disabled={isDestroying}
                   >
-                    ×
+                    <IconTrash />
                   </button>
                 </div>
               </div>
@@ -93,7 +64,7 @@ export const BalanceSheet = () => {
           <div className="text-right mt-2 mr-3">
             <span className="text-sm font-medium text-gray-600 dark:text-neutral-400">
               {category} Total: {formatCurrency(
-                categoryAccounts.reduce((sum, account) => sum + account.currentBalance, 0)
+                categoryAccounts.reduce((sum, account) => sum + parseFloat(account.current_balance), 0)
               )}
             </span>
           </div>
@@ -106,6 +77,46 @@ export const BalanceSheet = () => {
       </div>
     </div>
   );
+}
+
+export const BalanceSheet = () => {
+  const { data: accounts, isLoading } = useAccountsListQuery({ pageSize: allPages })
+  const [destroyAccount, { isLoading: isDestroying }] = useAccountsDestroyMutation();
+
+  const { formatCurrency } = useCurrency();
+  const [editingAccount, setEditingAccount] = useState<AccountRead | null>(null);
+  const [accountToDelete, setAccountToDelete] = useState<AccountRead | null>(null);
+
+  const groupAccountsByType = (accounts: AccountRead[]) => {
+    return accounts.reduce((groups, account) => {
+      if (!groups[account.type]) {
+        groups[account.type] = {};
+      }
+      if (!groups[account.type][account.category]) {
+        groups[account.type][account.category] = [];
+      }
+      groups[account.type][account.category].push(account);
+      return groups;
+    }, {} as Record<string, Record<string, AccountRead[]>>);
+  };
+
+  const calculateTotalByType = (accounts: AccountRead[], type: string) => {
+    return accounts
+      .filter(account => account.type === type)
+      .reduce((total, account) => total + parseFloat(account.current_balance), 0);
+  };
+
+  const groupedAccounts = groupAccountsByType(accounts?.results || []);
+  const totalAssets = calculateTotalByType(accounts?.results || [], 'asset');
+  const totalLiabilities = calculateTotalByType(accounts?.results || [], 'liability');
+  const totalEquity = calculateTotalByType(accounts?.results || [], 'equity');
+  const netWorth = totalAssets - totalLiabilities;
+
+  const onDeleteAccount = (accountId: number) => {
+    destroyAccount({ id: accountId }).unwrap().then(() => {
+      toast.success('Account deleted successfully!');
+    }).catch(error => toast.error(JSON.stringify(error)))
+  }
 
   // Show loading state during initial data fetch
   if (isLoading) {
@@ -126,7 +137,7 @@ export const BalanceSheet = () => {
     );
   }
 
-  if (accountsWithBalances.length === 0) {
+  if (accounts?.results.length === 0) {
     return <WelcomeScreen />;
   }
 
@@ -149,6 +160,9 @@ export const BalanceSheet = () => {
             accounts={groupedAccounts.asset}
             total={totalAssets}
             type="asset"
+            isDestroying={isDestroying}
+            setEditingAccount={setEditingAccount}
+            setAccountToDelete={setAccountToDelete}
           />
         )}
 
@@ -159,6 +173,9 @@ export const BalanceSheet = () => {
             accounts={groupedAccounts.liability}
             total={totalLiabilities}
             type="liability"
+            isDestroying={isDestroying}
+            setEditingAccount={setEditingAccount}
+            setAccountToDelete={setAccountToDelete}
           />
         )}
 
@@ -169,6 +186,9 @@ export const BalanceSheet = () => {
             accounts={groupedAccounts.equity}
             total={totalEquity}
             type="equity"
+            isDestroying={isDestroying}
+            setEditingAccount={setEditingAccount}
+            setAccountToDelete={setAccountToDelete}
           />
         )}
 
@@ -203,7 +223,6 @@ export const BalanceSheet = () => {
         <ManageAccountModal
           account={editingAccount}
           onClose={() => setEditingAccount(null)}
-          onSave={handleSaveAccount}
         />
       )}
 
@@ -212,14 +231,14 @@ export const BalanceSheet = () => {
         onClose={() => setAccountToDelete(null)}
         onConfirm={() => {
           if (accountToDelete) {
-            deleteAccount(accountToDelete.id);
+            onDeleteAccount(accountToDelete.id);
             setAccountToDelete(null);
           }
         }}
         title={
-          accountToDelete?.category === 'Credit Cards'
+          accountToDelete?.category === 'credit_card'
             ? 'Remove Card Record'
-            : accountToDelete?.category === 'Cash and Cash Equivalents'
+            : accountToDelete?.category === 'cash'
               ? 'Remove Cash Account'
               : `Remove ${accountToDelete?.category || 'Account'} Record`
         }
@@ -227,7 +246,7 @@ export const BalanceSheet = () => {
           ? accountToDelete.name.substring(0, 50) + '...'
           : accountToDelete?.name
           }"? This will also remove all associated balance history. This action cannot be undone.`}
-        confirmText="Delete"
+        confirmText='Delete'
         variant="danger"
       />
     </div>

@@ -76,6 +76,30 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ["accounts"],
       }),
+      accountsImportTransactionCreate: build.mutation<
+        AccountsImportTransactionCreateApiResponse,
+        AccountsImportTransactionCreateApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/accounts/${queryArg.id}/import_transaction/`,
+          method: "POST",
+          body: queryArg.body,
+        }),
+        invalidatesTags: ["accounts"],
+      }),
+      accountsAutocompleteList: build.query<
+        AccountsAutocompleteListApiResponse,
+        AccountsAutocompleteListApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/accounts/autocomplete/`,
+          params: {
+            page: queryArg.page,
+            page_size: queryArg.pageSize,
+          },
+        }),
+        providesTags: ["accounts"],
+      }),
       activateRetrieve: build.query<
         ActivateRetrieveApiResponse,
         ActivateRetrieveApiArg
@@ -89,6 +113,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/balances/`,
           params: {
+            date: queryArg.date,
             page: queryArg.page,
             page_size: queryArg.pageSize,
           },
@@ -123,11 +148,27 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ["balances"],
       }),
+      balancesBulkCreateCreate: build.mutation<
+        BalancesBulkCreateCreateApiResponse,
+        BalancesBulkCreateCreateApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/balances/bulk-create/`,
+          method: "POST",
+          body: queryArg.body,
+        }),
+        invalidatesTags: ["balances"],
+      }),
       balancesLatestRetrieve: build.query<
         BalancesLatestRetrieveApiResponse,
         BalancesLatestRetrieveApiArg
       >({
-        query: () => ({ url: `/api/balances/latest/` }),
+        query: (queryArg) => ({
+          url: `/api/balances/latest/`,
+          params: {
+            date: queryArg.date,
+          },
+        }),
         providesTags: ["balances"],
       }),
       changePasswordUpdate: build.mutation<
@@ -236,8 +277,17 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/transactions/`,
           params: {
+            account: queryArg.account,
+            amount_max: queryArg.amountMax,
+            amount_min: queryArg.amountMin,
+            date_after: queryArg.dateAfter,
+            date_before: queryArg.dateBefore,
+            description: queryArg.description,
+            is_system: queryArg.isSystem,
             page: queryArg.page,
             page_size: queryArg.pageSize,
+            raw_category: queryArg.rawCategory,
+            type: queryArg["type"],
           },
         }),
         providesTags: ["transactions"],
@@ -330,6 +380,22 @@ export type AccountsDestroyApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
 };
+export type AccountsImportTransactionCreateApiResponse = unknown;
+export type AccountsImportTransactionCreateApiArg = {
+  /** A unique integer value identifying this Account. */
+  id: number;
+  body: {
+    file?: Blob;
+  };
+};
+export type AccountsAutocompleteListApiResponse =
+  /** status 200  */ PaginatedAccountSlimListRead;
+export type AccountsAutocompleteListApiArg = {
+  /** A page number within the paginated result set. */
+  page?: number;
+  /** Number of results to return per page. */
+  pageSize?: number;
+};
 export type ActivateRetrieveApiResponse = unknown;
 export type ActivateRetrieveApiArg = {
   token: string;
@@ -338,6 +404,7 @@ export type ActivateRetrieveApiArg = {
 export type BalancesListApiResponse =
   /** status 200  */ PaginatedBalanceRecordListRead;
 export type BalancesListApiArg = {
+  date?: string;
   /** A page number within the paginated result set. */
   page?: number;
   /** Number of results to return per page. */
@@ -357,9 +424,15 @@ export type BalancesDestroyApiArg = {
   /** A unique integer value identifying this Balance Record. */
   id: number;
 };
+export type BalancesBulkCreateCreateApiResponse = unknown;
+export type BalancesBulkCreateCreateApiArg = {
+  body: BalanceRecord[];
+};
 export type BalancesLatestRetrieveApiResponse =
   /** status 200  */ BalanceRecordRead;
-export type BalancesLatestRetrieveApiArg = void;
+export type BalancesLatestRetrieveApiArg = {
+  date?: string;
+};
 export type ChangePasswordUpdateApiResponse = /** status 200  */ ChangePassword;
 export type ChangePasswordUpdateApiArg = {
   changePassword: ChangePassword;
@@ -403,10 +476,22 @@ export type TokenRefreshCreateApiArg = {
 export type TransactionsListApiResponse =
   /** status 200  */ PaginatedReadTransactionListRead;
 export type TransactionsListApiArg = {
+  /** Multiple values may be separated by commas. */
+  account?: number[];
+  amountMax?: string;
+  amountMin?: string;
+  dateAfter?: string;
+  dateBefore?: string;
+  description?: string;
+  isSystem?: boolean;
   /** A page number within the paginated result set. */
   page?: number;
   /** Number of results to return per page. */
   pageSize?: number;
+  rawCategory?: string;
+  /** * `income` - Income
+   * `expense` - Expense */
+  type?: "expense" | "income";
 };
 export type TransactionsCreateApiResponse =
   /** status 201  */ WriteTransactionRead;
@@ -461,6 +546,7 @@ export type AccountRead = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
+  current_balance: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -489,9 +575,29 @@ export type PatchedAccountRead = {
   type?: AccountTypeEnum;
   category?: CategoryEnum;
   currency?: CurrencyEnum;
+  current_balance?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
+};
+export type AccountSlim = {
+  name: string;
+};
+export type AccountSlimRead = {
+  id: number;
+  name: string;
+};
+export type PaginatedAccountSlimList = {
+  count: number;
+  next?: string | null;
+  previous?: string | null;
+  results: AccountSlim[];
+};
+export type PaginatedAccountSlimListRead = {
+  count: number;
+  next?: string | null;
+  previous?: string | null;
+  results: AccountSlimRead[];
 };
 export type BalanceRecord = {
   account: number;
@@ -608,13 +714,6 @@ export type ReadTransaction = {
   description?: string;
   raw_category?: string;
 };
-export type AccountSlim = {
-  name: string;
-};
-export type AccountSlimRead = {
-  id: number;
-  name: string;
-};
 export type ReadTransactionRead = {
   id: number;
   type: TransactionTypeEnum;
@@ -698,11 +797,14 @@ export const {
   useAccountsUpdateMutation,
   useAccountsPartialUpdateMutation,
   useAccountsDestroyMutation,
+  useAccountsImportTransactionCreateMutation,
+  useAccountsAutocompleteListQuery,
   useActivateRetrieveQuery,
   useBalancesListQuery,
   useBalancesCreateMutation,
   useBalancesRetrieveQuery,
   useBalancesDestroyMutation,
+  useBalancesBulkCreateCreateMutation,
   useBalancesLatestRetrieveQuery,
   useChangePasswordUpdateMutation,
   useChangePasswordPartialUpdateMutation,

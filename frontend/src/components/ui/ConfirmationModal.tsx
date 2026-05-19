@@ -6,7 +6,7 @@ interface ConfirmationModalProps {
     onClose: () => void;
     onConfirm: () => void;
     title: string;
-    message: string;
+    message: React.ReactNode;
     confirmText?: string;
     cancelText?: string;
     variant?: 'danger' | 'warning' | 'info';
@@ -166,9 +166,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                     </h3>
                 </div>
 
-                <p id="modal-description" className="text-gray-600 mb-8 leading-relaxed text-lg">
+                <div id="modal-description" className="text-gray-600 mb-8 leading-relaxed text-lg">
                     {message}
-                </p>
+                </div>
 
                 {requiresChallenge && (
                     <div className="mb-8">
@@ -197,7 +197,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                         }}
                         disabled={isConfirmDisabled}
                         aria-label={`${confirmText} ${title}`}
-                        className={`flex-[2] py-4 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed ${styles.button}`}
+                        className={`flex-2 py-4 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed ${styles.button}`}
                     >
                         {confirmText}
                     </button>

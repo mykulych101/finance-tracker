@@ -46,7 +46,7 @@ const tokenRefreshFetchBase: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQ
           refresh: localStorage.getItem('refresh'),
         },
         method: 'POST',
-        url: '/api/auth/refresh/',
+        url: '/api/token/refresh/',
       },
       api,
       extraOptions

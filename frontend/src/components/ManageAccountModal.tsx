@@ -1,36 +1,37 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Account, ACCOUNT_CATEGORIES, ACCOUNT_CATEGORIES_TYPE } from '@/types/finance';
+import { useEffect } from 'react';
+import { Account, AccountRead, useAccountsPartialUpdateMutation } from '@/redux/api';
+import { useForm } from 'react-hook-form';
+import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES, CURRENCY_OPTIONS } from '@/constants/financeConstants';
+import { toast } from 'sonner';
 
 interface ManageAccountModalProps {
-  account: Account;
-  onSave: (updates: Pick<Account, 'name' | 'category' | 'type'>) => void;
+  account: AccountRead;
   onClose: () => void;
 }
 
-export const ManageAccountModal = ({ account, onSave, onClose }: ManageAccountModalProps) => {
-  const [name, setName] = useState(account.name);
-  const [type, setType] = useState<Account['type']>(account.type);
-  const [category, setCategory] = useState(account.category);
-
-  const categoryOptions = useMemo(() => {
-    const options = (ACCOUNT_CATEGORIES as ACCOUNT_CATEGORIES_TYPE)[type];
-    return options.includes(category as string) ? options : [...options, category];
-  }, [category, type]);
+export const ManageAccountModal = ({ account, onClose }: ManageAccountModalProps) => {
+  const [updateAccount, { isLoading: isUpdating }] = useAccountsPartialUpdateMutation();
+  const { register, handleSubmit, watch, setValue } = useForm<Account>({
+    defaultValues: {
+      ...account,
+      category: account.category
+    }
+  })
+  const selectedType = watch('type', 'asset')
 
   useEffect(() => {
-    const options = (ACCOUNT_CATEGORIES as ACCOUNT_CATEGORIES_TYPE)[type];
-    if (!options.includes(category)) {
-      setCategory(options[0]);
-    }
-  }, [category, type]);
+    setValue('category', ACCOUNT_CATEGORIES[selectedType][0]);
+  }, [selectedType, setValue]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
-    onSave({ name: trimmedName, category, type });
+
+  const onSubmit = (values: Account) => {
+
+    updateAccount({ id: account.id, patchedAccount: values }).unwrap().then(() => {
+      toast.success('Account updated successfully!');
+      onClose();
+    }).catch(error => toast.error(JSON.stringify(error)))
   };
 
   return (
@@ -50,7 +51,7 @@ export const ManageAccountModal = ({ account, onSave, onClose }: ManageAccountMo
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label htmlFor="account-name" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
               Account Name
@@ -58,43 +59,56 @@ export const ManageAccountModal = ({ account, onSave, onClose }: ManageAccountMo
             <input
               id="account-name"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...register('name', { required: true })}
               className="w-full border border-gray-300 dark:border-neutral-600 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
               placeholder="e.g., Checking Account"
-              required
             />
           </div>
 
           <div>
-            <label htmlFor="account-type" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
+            <label htmlFor="accountType" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
               Account Type
             </label>
             <select
-              id="account-type"
-              value={type}
-              onChange={(e) => setType(e.target.value as Account['type'])}
-              className="w-full border border-gray-300 dark:border-neutral-600 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
+              id="accountType"
+              {...register('type', { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
             >
-              <option value="asset">Asset</option>
-              <option value="liability">Liability</option>
-              <option value="equity">Equity</option>
+              {ACCOUNT_TYPES.map(type => <option key={type} value={type}>
+                {type}
+              </option>)}
             </select>
           </div>
 
           <div>
-            <label htmlFor="account-category" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
+            <label htmlFor="accountCategory" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
               Category
             </label>
             <select
-              id="account-category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full border border-gray-300 dark:border-neutral-600 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
+              id="accountCategory"
+              {...register('category', { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
             >
-              {categoryOptions.map((option: string) => (
-                <option key={option} value={option}>
-                  {option}
+              {ACCOUNT_CATEGORIES[selectedType].map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="accountCurrency" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
+              Currency
+            </label>
+            <select
+              id="accountCurrency"
+              {...register('currency', { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
+            >
+              {CURRENCY_OPTIONS.map((currency) => (
+                <option key={currency} value={currency}>
+                  {currency}
                 </option>
               ))}
             </select>
@@ -111,8 +125,9 @@ export const ManageAccountModal = ({ account, onSave, onClose }: ManageAccountMo
             <button
               type="submit"
               className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              disabled={isUpdating}
             >
-              Save Changes
+              {isUpdating ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

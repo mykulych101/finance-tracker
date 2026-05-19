@@ -25,7 +25,7 @@ class BalanceRecordSerializer(serializers.ModelSerializer):
         if balance_record:
             delta = new_amount - balance_record.amount
             balance_record.amount = new_amount
-            balance_record.note = validated_data["note"]
+            balance_record.note = validated_data.get("note", "")
             balance_record.save(update_fields=["amount", "note"])
         else:
             prior = BalanceRecord.objects.filter(account=account, date__lt=date).order_by("-date").first()

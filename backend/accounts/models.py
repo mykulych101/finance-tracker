@@ -19,7 +19,13 @@ class Account(models.Model):
         db_table = "accounts"
         verbose_name = "Account"
         verbose_name_plural = "Accounts"
-        unique_together = ["user", "name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"],
+                condition=models.Q(is_active=True),
+                name="unique_active_account_name_per_user",
+            )
+        ]
         indexes = [models.Index(fields=["type"]), models.Index(fields=["is_active"])]
 
     def __str__(self):
