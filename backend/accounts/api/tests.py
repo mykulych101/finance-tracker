@@ -255,12 +255,14 @@ class ImportTransactionTests(BaseAPITest):
         self.assertEqual(income.description, "Salary")
         self.assertEqual(income.date, date(2026, 4, 22))
         self.assertEqual(income.raw_category, "Electronics")
+        self.assertIsNotNone(income.import_fingerprint)
 
         expense = Transaction.objects.get(account=self.account, type=TransactionType.EXPENSE)
         self.assertEqual(expense.amount, Decimal("50.00"))
         self.assertEqual(expense.date, date(2026, 4, 23))
         self.assertEqual(expense.description, "Coffee")
         self.assertEqual(expense.raw_category, "Food")
+        self.assertIsNotNone(expense.import_fingerprint)
 
         balance_record = BalanceRecord.objects.filter(account=self.account).first()
         self.assertIsNotNone(balance_record)
@@ -284,3 +286,41 @@ class ImportTransactionTests(BaseAPITest):
         resp = self.client.post(self.url, {"file": file}, format="multipart")
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_duplicate_file(self):
+        file = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 1)
+        file.seek(0)
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 1)
+
+    def test_import_duplicate_transaction_rows_in_different_files(self):
+        file = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+        )
+        file2 = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+            "22.04.2026 10:00:00,Salary,1000.00,Test",
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 1)
+        resp = self.client.post(self.url, {"file": file2}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 1)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 2)
+
+    def test_import_duplicate_transaction_rows_in_same_file(self):
+        file = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 1)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 1)

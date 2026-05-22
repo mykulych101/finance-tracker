@@ -1,6 +1,9 @@
+import hashlib
+
 import tablib
 from django.db.transaction import atomic
 from drf_spectacular.utils import extend_schema
+from import_export.results import RowResult
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -12,6 +15,7 @@ from rest_framework.viewsets import ModelViewSet
 from accounts.api.serializers import AccountSerializer, AccountSlimSerializer
 from accounts.models import Account
 from transactions.api.resources import TransactionResource
+from transactions.models import TransactionImport
 
 
 class AccountViewSet(ModelViewSet):
@@ -45,13 +49,18 @@ class AccountViewSet(ModelViewSet):
         file = request.FILES.get("file")
         if not file:
             raise ValidationError({"error": "No file provided"})
+        file_bytes = file.read()
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
         try:
-            book = tablib.Dataset().load(file.read().decode("utf-8"), format="csv")
+            book = tablib.Dataset().load(file_bytes.decode("utf-8"), format="csv")
         except (tablib.UnsupportedFormat, tablib.InvalidDimensions, ValueError, IndexError) as e:
             raise ValidationError({"error": f"Invalid file format: {e}"})
+        if TransactionImport.objects.filter(account=account, file_hash=file_hash).exists():
+            raise ValidationError({"error": "This file has already been imported for this account"})
+        TransactionImport.objects.create(account=account, file_hash=file_hash)
 
         resource = TransactionResource(account=account)
         result = resource.import_data(book, dry_run=False)
         if result.has_errors() or result.has_validation_errors():
             raise ValidationError({"error": "CSV contains invalid rows"})
-        return Response({"imported": result.total_rows}, status=status.HTTP_200_OK)
+        return Response({"imported": result.totals[RowResult.IMPORT_TYPE_NEW]}, status=status.HTTP_200_OK)
