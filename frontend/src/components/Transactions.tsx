@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { TransactionModal } from '@/components/TransactionModal';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { Pagination } from '@/components/ui/Pagination';
+import { SortIcon } from '@/components/ui/SortIcon';
+import { allPages, SEARCH_DEBOUNCE_MS } from '@/constants/constants';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   ReadTransactionRead,
   TransactionsListApiArg,
@@ -10,12 +17,7 @@ import {
   useTransactionsDestroyMutation,
   useTransactionsListQuery,
 } from '@/redux/api';
-import { allPages, SEARCH_DEBOUNCE_MS } from '@/constants/constants';
-import { useDebounce } from '@/hooks/useDebounce';
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { Pagination } from '@/components/ui/Pagination';
-import { TransactionModal } from '@/components/TransactionModal';
-import { toast } from 'sonner';
+import { TransactionSort, TransactionSortField } from '@/types/transactions';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -27,10 +29,17 @@ export const Transactions = () => {
   const debouncedDescription = useDebounce(formValues.description, SEARCH_DEBOUNCE_MS);
   const debouncedRawCategory = useDebounce(formValues.rawCategory, SEARCH_DEBOUNCE_MS);
 
+  const [sort, setSort] = useState<TransactionSort | null>(null);
+
+  const ordering = sort
+    ? ([sort.dir === 'desc' ? `-${sort.field}` : sort.field] as TransactionsListApiArg['ordering'])
+    : undefined;
+
   const queryArg: TransactionsListApiArg = {
     ...formValues,
     description: debouncedDescription || undefined,
     rawCategory: debouncedRawCategory || undefined,
+    ordering,
   };
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -48,6 +57,15 @@ export const Transactions = () => {
 
   const transactions = useMemo(() => data?.results || [], [data]);
   const accounts = useMemo(() => accountsData?.results || [], [accountsData]);
+
+  const handleSort = (field: TransactionSortField) => {
+    setSort(prev => {
+      if (prev?.field !== field) return { field, dir: 'asc' };
+      if (prev.dir === 'asc') return { field, dir: 'desc' };
+      return null;
+    });
+    setValue('page', 1);
+  };
 
   const onDelete = (id: number) => {
     destroyTransaction({ id })
@@ -124,12 +142,12 @@ export const Transactions = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-neutral-700 text-left text-gray-500 dark:text-neutral-400">
-                      <th className="pb-2 pr-4 font-medium">Date</th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('date')}>Date<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="date" /></th>
                       <th className="pb-2 pr-4 font-medium">Account</th>
-                      <th className="pb-2 pr-4 font-medium">Type</th>
-                      <th className="pb-2 pr-4 font-medium">Amount</th>
-                      <th className="pb-2 pr-4 font-medium">Description</th>
-                      <th className="pb-2 pr-4 font-medium">Category</th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('type')}>Type<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="type" /></th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('amount')}>Amount<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="amount" /></th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('description')}>Description<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="description" /></th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('raw_category')}>Category<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="raw_category" /></th>
                       <th className="pb-2 font-medium">Actions</th>
                     </tr>
                   </thead>
