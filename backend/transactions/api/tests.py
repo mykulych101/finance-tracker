@@ -48,6 +48,38 @@ class TransactionTests(BaseAPITest):
         for field in required_fields:
             self.assertIn(field, transaction)
 
+    def test_order_by_amount(self):
+        TransactionFactory.create(
+            account=self.account, amount=Decimal("20.00"), type=TransactionType.EXPENSE, date="2024-01-01"
+        )
+        TransactionFactory.create(
+            account=self.account, amount=Decimal("10.00"), type=TransactionType.INCOME, date="2024-01-01"
+        )
+        TransactionFactory.create(
+            account=self.account, amount=Decimal("30.00"), type=TransactionType.INCOME, date="2024-01-01"
+        )
+        resp = self.client.get(f"{self.list_url}?ordering=amount")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 3)
+        self.assertEqual(Decimal(resp.data["results"][0]["amount"]), Decimal("20.00"))
+        self.assertEqual(resp.data["results"][0]["type"], TransactionType.EXPENSE)
+
+        self.assertEqual(Decimal(resp.data["results"][1]["amount"]), Decimal("10.00"))
+        self.assertEqual(resp.data["results"][1]["type"], TransactionType.INCOME)
+
+        self.assertEqual(Decimal(resp.data["results"][2]["amount"]), Decimal("30.00"))
+        self.assertEqual(resp.data["results"][2]["type"], TransactionType.INCOME)
+
+        resp = self.client.get(f"{self.list_url}?ordering=-amount")
+        self.assertEqual(Decimal(resp.data["results"][0]["amount"]), Decimal("30.00"))
+        self.assertEqual(resp.data["results"][0]["type"], TransactionType.INCOME)
+
+        self.assertEqual(Decimal(resp.data["results"][1]["amount"]), Decimal("10.00"))
+        self.assertEqual(resp.data["results"][1]["type"], TransactionType.INCOME)
+
+        self.assertEqual(Decimal(resp.data["results"][2]["amount"]), Decimal("20.00"))
+        self.assertEqual(resp.data["results"][2]["type"], TransactionType.EXPENSE)
+
     def test_create__with_another_users_account(self):
         data = {
             "account_id": self.other_user_account.id,

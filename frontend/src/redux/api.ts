@@ -284,6 +284,7 @@ const injectedRtkApi = api
             date_before: queryArg.dateBefore,
             description: queryArg.description,
             is_system: queryArg.isSystem,
+            ordering: queryArg.ordering,
             page: queryArg.page,
             page_size: queryArg.pageSize,
             raw_category: queryArg.rawCategory,
@@ -484,6 +485,34 @@ export type TransactionsListApiArg = {
   dateBefore?: string;
   description?: string;
   isSystem?: boolean;
+  /** Ordering
+
+    * `type` - Type
+    * `-type` - Type (descending)
+    * `amount` - Amount
+    * `-amount` - Amount (descending)
+    * `date` - Date
+    * `-date` - Date (descending)
+    * `description` - Description
+    * `-description` - Description (descending)
+    * `raw_category` - Raw category
+    * `-raw_category` - Raw category (descending)
+    * `is_system` - Is system
+    * `-is_system` - Is system (descending) */
+  ordering?: (
+    | "-amount"
+    | "-date"
+    | "-description"
+    | "-is_system"
+    | "-raw_category"
+    | "-type"
+    | "amount"
+    | "date"
+    | "description"
+    | "is_system"
+    | "raw_category"
+    | "type"
+  )[];
   /** A page number within the paginated result set. */
   page?: number;
   /** Number of results to return per page. */

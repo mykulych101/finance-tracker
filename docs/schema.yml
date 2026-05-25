@@ -664,6 +664,42 @@ paths:
         name: is_system
         schema:
           type: boolean
+      - in: query
+        name: ordering
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - -amount
+            - -date
+            - -description
+            - -is_system
+            - -raw_category
+            - -type
+            - amount
+            - date
+            - description
+            - is_system
+            - raw_category
+            - type
+        description: |-
+          Ordering
+
+          * `type` - Type
+          * `-type` - Type (descending)
+          * `amount` - Amount
+          * `-amount` - Amount (descending)
+          * `date` - Date
+          * `-date` - Date (descending)
+          * `description` - Description
+          * `-description` - Description (descending)
+          * `raw_category` - Raw category
+          * `-raw_category` - Raw category (descending)
+          * `is_system` - Is system
+          * `-is_system` - Is system (descending)
+        explode: false
+        style: form
       - name: page
         required: false
         in: query
