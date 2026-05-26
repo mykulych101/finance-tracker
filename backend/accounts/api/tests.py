@@ -37,7 +37,7 @@ class AccountTests(BaseAPITest):
             "type",
             "category",
             "currency",
-            "current_balance",
+            "latest_balance",
             "is_active",
             "created_at",
             "updated_at",
@@ -45,7 +45,7 @@ class AccountTests(BaseAPITest):
         for field in required_fields:
             self.assertIn(field, resp.data["results"][0])
 
-    def test_retrieve_accounts_current_balance_calculation(self):
+    def test_retrieve_accounts_latest_balance_calculation(self):
         today = timezone.localdate()
         yesterday = today - timezone.timedelta(days=1)
         account1 = AccountFactory.create(user=self.user)
@@ -57,9 +57,9 @@ class AccountTests(BaseAPITest):
         self.assertEqual(resp.status_code, 200)
         for account_data in resp.data["results"]:
             if account_data["id"] == account1.id:
-                self.assertEqual(account_data["current_balance"], 100)
+                self.assertEqual(account_data["latest_balance"], 100)
             elif account_data["id"] == account2.id:
-                self.assertEqual(account_data["current_balance"], 50)
+                self.assertEqual(account_data["latest_balance"], 50)
 
     def test_retrieve_account_by_id(self):
         account = AccountFactory.create(user=self.user)

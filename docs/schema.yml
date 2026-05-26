@@ -39,13 +39,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/WriteAccount'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/WriteAccount'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/WriteAccount'
         required: true
       security:
       - jwtAuth: []
@@ -54,7 +54,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
+                $ref: '#/components/schemas/WriteAccount'
           description: ''
   /api/accounts/{id}/:
     get:
@@ -92,13 +92,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/WriteAccount'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/WriteAccount'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/WriteAccount'
         required: true
       security:
       - jwtAuth: []
@@ -107,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
+                $ref: '#/components/schemas/WriteAccount'
           description: ''
     patch:
       operationId: accounts_partial_update
@@ -124,13 +124,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedAccount'
+              $ref: '#/components/schemas/PatchedWriteAccount'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedAccount'
+              $ref: '#/components/schemas/PatchedWriteAccount'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedAccount'
+              $ref: '#/components/schemas/PatchedWriteAccount'
       security:
       - jwtAuth: []
       responses:
@@ -138,7 +138,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
+                $ref: '#/components/schemas/WriteAccount'
           description: ''
     delete:
       operationId: accounts_destroy
@@ -233,6 +233,29 @@ paths:
           description: Account activated successfully
         '400':
           description: Invalid activation link
+  /api/analytics/net_worth/:
+    get:
+      operationId: analytics_net_worth_retrieve
+      description: Get net worth summary for the user.
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+        description: As-of date (YYYY-MM-DD). Defaults to today.
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsNetWorth'
+          description: ''
   /api/balances/:
     get:
       operationId: balances_list
@@ -879,14 +902,13 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
-        current_balance:
+        latest_balance:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
           readOnly: true
         is_active:
           type: boolean
-          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -899,9 +921,8 @@ components:
       - category
       - created_at
       - currency
-      - current_balance
       - id
-      - is_active
+      - latest_balance
       - name
       - type
       - updated_at
@@ -927,6 +948,61 @@ components:
         * `asset` - Asset
         * `liability` - Liability
         * `equity` - Equity
+    AccountWithBalance:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        latest_balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - id
+      - latest_balance
+      - name
+    AnalyticsNetWorth:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        net_worth:
+          type: number
+          format: double
+          maximum: 1000000000000000000
+          minimum: -1000000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        assets_total:
+          type: number
+          format: double
+          maximum: 1000000000000000000
+          minimum: -1000000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        liabilities_total:
+          type: number
+          format: double
+          maximum: 1000000000000000000
+          minimum: -1000000000000000000
+          exclusiveMaximum: true
+          exclusiveMinimum: true
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountWithBalance'
+      required:
+      - accounts
+      - assets_total
+      - date
+      - liabilities_total
+      - net_worth
     BalanceRecord:
       type: object
       properties:
@@ -1115,37 +1191,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReadTransaction'
-    PatchedAccount:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 255
-        type:
-          $ref: '#/components/schemas/AccountTypeEnum'
-        category:
-          $ref: '#/components/schemas/CategoryEnum'
-        currency:
-          $ref: '#/components/schemas/CurrencyEnum'
-        current_balance:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          readOnly: true
-        is_active:
-          type: boolean
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
     PatchedChangePassword:
       type: object
       properties:
@@ -1167,6 +1212,18 @@ components:
           type: string
           title: Full name
           maxLength: 255
+    PatchedWriteAccount:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
     PatchedWriteTransaction:
       type: object
       properties:
@@ -1340,6 +1397,23 @@ components:
       - email
       - id
       - name
+    WriteAccount:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        type:
+          $ref: '#/components/schemas/AccountTypeEnum'
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+      required:
+      - category
+      - currency
+      - name
+      - type
     WriteTransaction:
       type: object
       properties:

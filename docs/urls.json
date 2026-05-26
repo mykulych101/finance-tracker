@@ -600,6 +600,30 @@
         "decorators": ""
     },
     {
+        "url": "/api/analytics/net_worth/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth",
+        "decorators": ""
+    },
+    {
+        "url": "/api/analytics/net_worth\\.<format>/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth",
+        "decorators": ""
+    },
+    {
+        "url": "/api/",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/api/<drf_format_suffix:format>",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
         "url": "/__debug__/render_panel/",
         "module": "debug_toolbar.views.render_panel",
         "name": "djdt:render_panel",

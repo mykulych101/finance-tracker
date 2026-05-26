@@ -2,6 +2,7 @@ import { baseApi as api } from "./baseApi";
 export const addTagTypes = [
   "accounts",
   "activate",
+  "analytics",
   "balances",
   "change-password",
   "authentication",
@@ -33,7 +34,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/accounts/`,
           method: "POST",
-          body: queryArg.account,
+          body: queryArg.writeAccount,
         }),
         invalidatesTags: ["accounts"],
       }),
@@ -51,7 +52,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/accounts/${queryArg.id}/`,
           method: "PUT",
-          body: queryArg.account,
+          body: queryArg.writeAccount,
         }),
         invalidatesTags: ["accounts"],
       }),
@@ -62,7 +63,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/accounts/${queryArg.id}/`,
           method: "PATCH",
-          body: queryArg.patchedAccount,
+          body: queryArg.patchedWriteAccount,
         }),
         invalidatesTags: ["accounts"],
       }),
@@ -108,6 +109,18 @@ const injectedRtkApi = api
           url: `/api/activate/${queryArg.uidb64}/${queryArg.token}/`,
         }),
         providesTags: ["activate"],
+      }),
+      analyticsNetWorthRetrieve: build.query<
+        AnalyticsNetWorthRetrieveApiResponse,
+        AnalyticsNetWorthRetrieveApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/analytics/net_worth/`,
+          params: {
+            date: queryArg.date,
+          },
+        }),
+        providesTags: ["analytics"],
       }),
       balancesList: build.query<BalancesListApiResponse, BalancesListApiArg>({
         query: (queryArg) => ({
@@ -355,26 +368,26 @@ export type AccountsListApiArg = {
   /** Number of results to return per page. */
   pageSize?: number;
 };
-export type AccountsCreateApiResponse = /** status 201  */ AccountRead;
+export type AccountsCreateApiResponse = /** status 201  */ WriteAccount;
 export type AccountsCreateApiArg = {
-  account: Account;
+  writeAccount: WriteAccount;
 };
 export type AccountsRetrieveApiResponse = /** status 200  */ AccountRead;
 export type AccountsRetrieveApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
 };
-export type AccountsUpdateApiResponse = /** status 200  */ AccountRead;
+export type AccountsUpdateApiResponse = /** status 200  */ WriteAccount;
 export type AccountsUpdateApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
-  account: Account;
+  writeAccount: WriteAccount;
 };
-export type AccountsPartialUpdateApiResponse = /** status 200  */ AccountRead;
+export type AccountsPartialUpdateApiResponse = /** status 200  */ WriteAccount;
 export type AccountsPartialUpdateApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
-  patchedAccount: PatchedAccount;
+  patchedWriteAccount: PatchedWriteAccount;
 };
 export type AccountsDestroyApiResponse = unknown;
 export type AccountsDestroyApiArg = {
@@ -401,6 +414,12 @@ export type ActivateRetrieveApiResponse = unknown;
 export type ActivateRetrieveApiArg = {
   token: string;
   uidb64: string;
+};
+export type AnalyticsNetWorthRetrieveApiResponse =
+  /** status 200  */ AnalyticsNetWorthRead;
+export type AnalyticsNetWorthRetrieveApiArg = {
+  /** As-of date (YYYY-MM-DD). Defaults to today. */
+  date?: string;
 };
 export type BalancesListApiResponse =
   /** status 200  */ PaginatedBalanceRecordListRead;
@@ -568,6 +587,7 @@ export type Account = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
+  is_active?: boolean;
 };
 export type AccountRead = {
   id: number;
@@ -575,8 +595,8 @@ export type AccountRead = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
-  current_balance: string;
-  is_active: boolean;
+  latest_balance: string;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -592,22 +612,17 @@ export type PaginatedAccountListRead = {
   previous?: string | null;
   results: AccountRead[];
 };
-export type PatchedAccount = {
-  name?: string;
-  type?: AccountTypeEnum;
-  category?: CategoryEnum;
-  currency?: CurrencyEnum;
+export type WriteAccount = {
+  name: string;
+  type: AccountTypeEnum;
+  category: CategoryEnum;
+  currency: CurrencyEnum;
 };
-export type PatchedAccountRead = {
-  id?: number;
+export type PatchedWriteAccount = {
   name?: string;
   type?: AccountTypeEnum;
   category?: CategoryEnum;
   currency?: CurrencyEnum;
-  current_balance?: string;
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
 };
 export type AccountSlim = {
   name: string;
@@ -627,6 +642,28 @@ export type PaginatedAccountSlimListRead = {
   next?: string | null;
   previous?: string | null;
   results: AccountSlimRead[];
+};
+export type AccountWithBalance = {
+  name: string;
+};
+export type AccountWithBalanceRead = {
+  id: number;
+  name: string;
+  latest_balance: string;
+};
+export type AnalyticsNetWorth = {
+  date: string;
+  net_worth: number;
+  assets_total: number;
+  liabilities_total: number;
+  accounts: AccountWithBalance[];
+};
+export type AnalyticsNetWorthRead = {
+  date: string;
+  net_worth: number;
+  assets_total: number;
+  liabilities_total: number;
+  accounts: AccountWithBalanceRead[];
 };
 export type BalanceRecord = {
   account: number;
@@ -829,6 +866,7 @@ export const {
   useAccountsImportTransactionCreateMutation,
   useAccountsAutocompleteListQuery,
   useActivateRetrieveQuery,
+  useAnalyticsNetWorthRetrieveQuery,
   useBalancesListQuery,
   useBalancesCreateMutation,
   useBalancesRetrieveQuery,

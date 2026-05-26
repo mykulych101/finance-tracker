@@ -12,20 +12,24 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from accounts.api.serializers import AccountSerializer, AccountSlimSerializer
+from accounts.api.serializers import AccountSerializer, AccountSlimSerializer, WriteAccountSerializer
 from accounts.models import Account
 from transactions.api.resources import TransactionResource
 from transactions.models import TransactionImport
 
 
 class AccountViewSet(ModelViewSet):
-    serializer_class = AccountSerializer
     autocomplete_serializer_class = AccountSlimSerializer
     permission_classes = [IsAuthenticated]
     queryset = Account.objects.all()
 
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            return WriteAccountSerializer
+        return AccountSerializer
+
     def get_queryset(self):
-        return Account.objects.filter(user=self.request.user, is_active=True)
+        return Account.objects.with_latest_balance().filter(user=self.request.user, is_active=True)
 
     def perform_destroy(self, instance):
         instance.is_active = False

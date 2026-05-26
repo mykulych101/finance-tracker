@@ -4,28 +4,42 @@ from rest_framework import serializers
 from accounts.models import Account
 
 
-class AccountSerializer(serializers.ModelSerializer):
-    current_balance = serializers.SerializerMethodField()
-
+class AccountSlimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
+        fields = ("id", "name")
+
+
+class AccountWithBalanceSerializer(AccountSlimSerializer):
+    latest_balance = serializers.SerializerMethodField()
+
+    class Meta(AccountSlimSerializer.Meta):
+        fields = ("id", "name", "latest_balance")
+
+    @extend_schema_field(serializers.DecimalField(max_digits=12, decimal_places=2))
+    def get_latest_balance(self, obj):
+        return obj.latest_balance or 0
+
+
+class AccountSerializer(AccountWithBalanceSerializer):
+    class Meta(AccountWithBalanceSerializer.Meta):
         fields = (
             "id",
             "name",
             "type",
             "category",
             "currency",
-            "current_balance",
+            "latest_balance",
             "is_active",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "current_balance", "created_at", "updated_at", "is_active")
 
-    @extend_schema_field(serializers.DecimalField(max_digits=12, decimal_places=2))
-    def get_current_balance(self, obj):
-        latest = obj.balance_records.order_by("-date").first()
-        return latest.amount if latest else 0
+
+class WriteAccountSerializer(AccountSerializer):
+    class Meta(AccountSerializer.Meta):
+        fields = ("name", "type", "category", "currency")
+        read_only_fields = ("id", "latest_balance", "created_at", "updated_at", "is_active")
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -39,9 +53,3 @@ class AccountSerializer(serializers.ModelSerializer):
         if qs.exists():
             raise serializers.ValidationError("You already have an account with this name.")
         return value
-
-
-class AccountSlimSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Account
-        fields = ("id", "name")

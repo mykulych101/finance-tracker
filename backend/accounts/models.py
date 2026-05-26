@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from accounts.constants import AccountCategory, AccountCurrency, AccountType
+from accounts.managers import AccountManager
 
 
 class Account(models.Model):
@@ -13,6 +14,8 @@ class Account(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = AccountManager()
 
     class Meta:
         ordering = ["-created_at"]
