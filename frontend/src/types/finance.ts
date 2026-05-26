@@ -20,32 +20,3 @@ export interface AccountWithBalance extends Account {
 export interface AccountWithHistory extends Account {
   balanceHistory: { date: Date; amount: number }[];
 }
-
-export type AccountType = 'asset' | 'liability' | 'equity';
-
-export interface ACCOUNT_CATEGORIES_TYPE {
-  asset: string[];
-  liability: string[];
-  equity: string[];
-}
-
-// TODO: Add crypto
-// TODO: Check Net Worth
-export const ACCOUNT_CATEGORIES: ACCOUNT_CATEGORIES_TYPE = {
-  asset: [
-    'Cash and Cash Equivalents',
-    'Investments',
-    'Real Estate',
-    'Personal Property',
-    'Other Assets'
-  ],
-  liability: [
-    'Credit Cards',
-    'Loans',
-    'Mortgages',
-    'Other Liabilities'
-  ],
-  equity: [
-    'Net Worth'
-  ]
-} as const;

@@ -6,7 +6,7 @@ import { CurrencySelector } from './CurrencySelector';
 import WelcomeScreen from './WelcomeScreen';
 import { ManageAccountModal } from './ManageAccountModal';
 import { ConfirmationModal } from './ui/ConfirmationModal';
-import { AccountRead, useAccountsDestroyMutation, useAccountsListQuery, } from '@/redux/api';
+import { AccountRead, useAccountsDestroyMutation, useAccountsListQuery, useAnalyticsNetWorthRetrieveQuery, } from '@/redux/api';
 import { allPages } from '@/constants/constants';
 import { toast } from 'sonner';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -14,7 +14,7 @@ import { IconEdit, IconTrash } from '@tabler/icons-react';
 const AccountSection = ({ title, accounts, total, type, isDestroying, setEditingAccount, setAccountToDelete }: {
   title: string;
   accounts: Record<string, AccountRead[]>;
-  total: number;
+  total: number | undefined;
   type: 'asset' | 'liability' | 'equity';
   isDestroying?: boolean;
   setEditingAccount: (account: AccountRead) => void;
@@ -37,9 +37,9 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
               >
                 <span className="text-gray-800 dark:text-neutral-200">{account.name}</span>
                 <div className="flex items-center">
-                  <span className={`mr-2 font-medium ${parseFloat(account.current_balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  <span className={`mr-2 font-medium ${parseFloat(account.latest_balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
-                    {formatCurrency(parseFloat(account.current_balance))}
+                    {formatCurrency(parseFloat(account.latest_balance))}
                   </span>
                   <button
                     onClick={() => setEditingAccount(account)}
@@ -64,7 +64,7 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
           <div className="text-right mt-2 mr-3">
             <span className="text-sm font-medium text-gray-600 dark:text-neutral-400">
               {category} Total: {formatCurrency(
-                categoryAccounts.reduce((sum, account) => sum + parseFloat(account.current_balance), 0)
+                categoryAccounts.reduce((sum, account) => sum + parseFloat(account.latest_balance), 0)
               )}
             </span>
           </div>
@@ -72,7 +72,7 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
       ))}
       <div className="text-right font-bold text-lg border-t border-gray-300 dark:border-neutral-600 pt-2 mt-4">
         <span className={`${type === 'asset' ? 'text-green-700 dark:text-green-400' : type === 'liability' ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
-          Total {title}: {formatCurrency(total)}
+          Total {title}: {formatCurrency(total || 0)}
         </span>
       </div>
     </div>
@@ -81,9 +81,9 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
 
 export const BalanceSheet = () => {
   const { data: accounts, isLoading } = useAccountsListQuery({ pageSize: allPages })
+  const { data: analytics, isLoading: isAnalyticsLoading } = useAnalyticsNetWorthRetrieveQuery({});
   const [destroyAccount, { isLoading: isDestroying }] = useAccountsDestroyMutation();
 
-  const { formatCurrency } = useCurrency();
   const [editingAccount, setEditingAccount] = useState<AccountRead | null>(null);
   const [accountToDelete, setAccountToDelete] = useState<AccountRead | null>(null);
 
@@ -103,14 +103,11 @@ export const BalanceSheet = () => {
   const calculateTotalByType = (accounts: AccountRead[], type: string) => {
     return accounts
       .filter(account => account.type === type)
-      .reduce((total, account) => total + parseFloat(account.current_balance), 0);
+      .reduce((total, account) => total + parseFloat(account.latest_balance), 0);
   };
 
   const groupedAccounts = groupAccountsByType(accounts?.results || []);
-  const totalAssets = calculateTotalByType(accounts?.results || [], 'asset');
-  const totalLiabilities = calculateTotalByType(accounts?.results || [], 'liability');
   const totalEquity = calculateTotalByType(accounts?.results || [], 'equity');
-  const netWorth = totalAssets - totalLiabilities;
 
   const onDeleteAccount = (accountId: number) => {
     destroyAccount({ id: accountId }).unwrap().then(() => {
@@ -119,7 +116,7 @@ export const BalanceSheet = () => {
   }
 
   // Show loading state during initial data fetch
-  if (isLoading) {
+  if (isLoading || isAnalyticsLoading) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg dark:shadow-neutral-900/50 p-6">
@@ -158,7 +155,7 @@ export const BalanceSheet = () => {
           <AccountSection
             title="Assets"
             accounts={groupedAccounts.asset}
-            total={totalAssets}
+            total={analytics?.assets_total}
             type="asset"
             isDestroying={isDestroying}
             setEditingAccount={setEditingAccount}
@@ -171,7 +168,7 @@ export const BalanceSheet = () => {
           <AccountSection
             title="Liabilities"
             accounts={groupedAccounts.liability}
-            total={totalLiabilities}
+            total={analytics?.liabilities_total}
             type="liability"
             isDestroying={isDestroying}
             setEditingAccount={setEditingAccount}
@@ -199,19 +196,19 @@ export const BalanceSheet = () => {
               <div>
                 <div className="text-sm text-gray-600 dark:text-neutral-400">Total Assets</div>
                 <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(totalAssets)}
+                  {analytics?.assets_total}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 dark:text-neutral-400">Total Liabilities</div>
                 <div className="text-lg font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(totalLiabilities)}
+                  {analytics?.liabilities_total}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 dark:text-neutral-400">Net Worth</div>
-                <div className={`text-xl font-bold ${netWorth >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                  {formatCurrency(netWorth)}
+                <div className={`text-xl font-bold ${(analytics?.net_worth || 0) >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                  {analytics?.net_worth}
                 </div>
               </div>
             </div>

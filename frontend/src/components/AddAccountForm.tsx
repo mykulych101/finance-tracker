@@ -13,6 +13,7 @@ export const AddAccountForm = () => {
   const [addAccount, { isLoading }] = useAccountsCreateMutation();
   const { register, handleSubmit, watch, reset, setValue } = useForm<Account>()
   const selectedType = watch('type', 'asset')
+  const selectedCategory = watch('category')
 
   useEffect(() => {
     setValue('category', ACCOUNT_CATEGORIES[selectedType][0]);
@@ -20,7 +21,7 @@ export const AddAccountForm = () => {
 
   const onSubmit = (values: Account) => {
     addAccount({
-      account: values
+      writeAccount: values
     }).unwrap()
       .then(() => {
         toast.success('Account added successfully!');
@@ -97,6 +98,21 @@ export const AddAccountForm = () => {
           ))}
         </select>
       </div>
+
+      {selectedCategory === 'credit_card' && (
+        <div>
+          <label htmlFor="creditLimit" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">
+            Credit Limit
+          </label>
+          <input
+            type="number"
+            id="creditLimit"
+            {...register('credit_limit')}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
+            placeholder="e.g., 5000"
+          />
+        </div>
+      )}
 
       <button
         type="submit"
