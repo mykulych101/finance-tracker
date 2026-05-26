@@ -902,6 +902,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
         latest_balance:
           type: string
           format: decimal
@@ -1224,6 +1229,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
     PatchedWriteTransaction:
       type: object
       properties:
@@ -1409,6 +1419,11 @@ components:
           $ref: '#/components/schemas/CategoryEnum'
         currency:
           $ref: '#/components/schemas/CurrencyEnum'
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - category
       - currency

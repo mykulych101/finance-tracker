@@ -29,6 +29,8 @@ export interface ACCOUNT_CATEGORIES_TYPE {
   equity: string[];
 }
 
+// TODO: Add crypto
+// TODO: Check Net Worth
 export const ACCOUNT_CATEGORIES: ACCOUNT_CATEGORIES_TYPE = {
   asset: [
     'Cash and Cash Equivalents',

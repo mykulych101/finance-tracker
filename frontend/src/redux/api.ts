@@ -587,6 +587,7 @@ export type Account = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
+  credit_limit?: string | null;
   is_active?: boolean;
 };
 export type AccountRead = {
@@ -595,6 +596,7 @@ export type AccountRead = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
+  credit_limit?: string | null;
   latest_balance: string;
   is_active?: boolean;
   created_at: string;
@@ -617,12 +619,14 @@ export type WriteAccount = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
+  credit_limit?: string | null;
 };
 export type PatchedWriteAccount = {
   name?: string;
   type?: AccountTypeEnum;
   category?: CategoryEnum;
   currency?: CurrencyEnum;
+  credit_limit?: string | null;
 };
 export type AccountSlim = {
   name: string;

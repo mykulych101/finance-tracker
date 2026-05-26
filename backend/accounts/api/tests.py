@@ -37,6 +37,7 @@ class AccountTests(BaseAPITest):
             "type",
             "category",
             "currency",
+            "credit_limit",
             "latest_balance",
             "is_active",
             "created_at",
@@ -104,6 +105,23 @@ class AccountTests(BaseAPITest):
         self.assertEqual(account.category, data["category"])
         self.assertEqual(account.currency, data["currency"])
 
+    def test_create_account_without_type_and_category(self):
+        url = reverse("account-list")
+        data = {
+            "name": "Test Account",
+            "type": AccountType.ASSET,
+            "currency": AccountCurrency.USD,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 400)
+        data = {
+            "name": "Test Account",
+            "category": AccountCategory.CASH,
+            "currency": AccountCurrency.USD,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 400)
+
     def test_create_duplicate_account_name(self):
         existing_account = AccountFactory.create(name="Existing", user=self.user)
         url = reverse("account-list")
@@ -121,12 +139,117 @@ class AccountTests(BaseAPITest):
         resp = self.client.post(url, data)
         self.assertEqual(resp.status_code, 201)
 
+    def test_create_credit_card_without_credit_limit(self):
+        url = reverse("account-list")
+        data = {
+            "name": "Credit Card Account",
+            "type": AccountType.LIABILITY,
+            "category": AccountCategory.CREDIT_CARD,
+            "currency": AccountCurrency.USD,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_non_credit_card_with_credit_limit(self):
+        url = reverse("account-list")
+        data = {
+            "name": "Non Credit Card Account",
+            "type": AccountType.ASSET,
+            "category": AccountCategory.CASH,
+            "currency": AccountCurrency.USD,
+            "credit_limit": 1000,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 201)
+        account = Account.objects.get(name=data["name"], user=self.user)
+        self.assertIsNone(account.credit_limit)
+
+    def test_create_credit_card_with_credit_limit(self):
+        url = reverse("account-list")
+        data = {
+            "name": "Credit Card Account",
+            "type": AccountType.LIABILITY,
+            "category": AccountCategory.CREDIT_CARD,
+            "currency": AccountCurrency.USD,
+            "credit_limit": 5000,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 201)
+        account = Account.objects.get(name=data["name"], user=self.user)
+        self.assertEqual(account.credit_limit, Decimal(5000))
+
+    def test_update_credit_card_without_credit_limit(self):
+        account = AccountFactory.create(
+            user=self.user,
+            type=AccountType.LIABILITY,
+            category=AccountCategory.CREDIT_CARD,
+            credit_limit=1000,
+        )
+        url = reverse("account-detail", args=(account.id,))
+        data = {
+            "name": "New name",
+        }
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 200)
+        account.refresh_from_db()
+        self.assertEqual(account.credit_limit, Decimal(1000))
+        self.assertEqual(account.name, data["name"])
+
+    def test_update_account_category_to_credit_card_without_credit_limit(self):
+        account = AccountFactory.create(
+            user=self.user,
+            type=AccountType.ASSET,
+            category=AccountCategory.CASH,
+        )
+        url = reverse("account-detail", args=(account.id,))
+        data = {
+            "type": AccountType.LIABILITY,
+            "category": AccountCategory.CREDIT_CARD,
+        }
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 400)
+        account.refresh_from_db()
+        self.assertEqual(account.category, AccountCategory.CASH)
+
+    def test_update_account_category_to_another_category_with_credit_limit(self):
+        account = AccountFactory.create(
+            user=self.user,
+            type=AccountType.LIABILITY,
+            category=AccountCategory.CREDIT_CARD,
+            credit_limit=1000,
+        )
+        url = reverse("account-detail", args=(account.id,))
+        data = {
+            "category": AccountCategory.LOAN,
+        }
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 200)
+        account.refresh_from_db()
+        self.assertEqual(account.category, AccountCategory.LOAN)
+        self.assertIsNone(account.credit_limit)
+
+    def test_update_credit_limit(self):
+        account = AccountFactory.create(
+            user=self.user,
+            type=AccountType.LIABILITY,
+            category=AccountCategory.CREDIT_CARD,
+            credit_limit=1000,
+        )
+        url = reverse("account-detail", args=(account.id,))
+        data = {
+            "credit_limit": 2000,
+        }
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 200)
+        account.refresh_from_db()
+        self.assertEqual(account.credit_limit, Decimal(2000))
+
     def test_update_account_all_fields(self):
         account = AccountFactory.create(user=self.user)
         url = reverse("account-detail", args=(account.id,))
         data = {
             "name": "Updated Account",
-            "type": AccountType.LIABILITY,
+            "type": AccountType.ASSET,
             "category": AccountCategory.INVESTMENTS,
             "currency": AccountCurrency.EUR,
         }
@@ -148,13 +271,14 @@ class AccountTests(BaseAPITest):
         self.assertEqual(account.name, data["name"])
 
     def test_update_account_type(self):
-        account = AccountFactory.create(user=self.user)
+        account = AccountFactory.create(user=self.user, type=AccountType.LIABILITY, category=AccountCategory.MORTGAGE)
         url = reverse("account-detail", args=(account.id,))
-        data = {"type": AccountType.ASSET}
+        data = {"type": AccountType.ASSET, "category": AccountCategory.CASH}
         resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
         account.refresh_from_db()
         self.assertEqual(account.type, data["type"])
+        self.assertEqual(account.category, data["category"])
 
     def test_update_account_duplicate_name(self):
         account = AccountFactory.create(user=self.user)
@@ -167,11 +291,11 @@ class AccountTests(BaseAPITest):
     def test_update_account_minimal_payload(self):
         account = AccountFactory.create(user=self.user)
         url = reverse("account-detail", args=(account.id,))
-        data = {"type": AccountType.EQUITY}
+        data = {"currency": AccountCurrency.EUR}
         resp = self.client.patch(url, data)
         self.assertEqual(resp.status_code, 200)
         account.refresh_from_db()
-        self.assertEqual(account.type, data["type"])
+        self.assertEqual(account.currency, data["currency"])
 
     def test_update_account_empty_payload(self):
         account = AccountFactory.create(user=self.user)
@@ -208,7 +332,9 @@ class AccountTests(BaseAPITest):
         self.assertEqual(resp.status_code, 404)
 
     def test_update_account_read_only_fields(self):
-        account = AccountFactory.create(user=self.user)
+        account = AccountFactory.create(
+            user=self.user, type=AccountType.ASSET, category=AccountCategory.CASH, currency=AccountCurrency.USD
+        )
         url = reverse("account-detail", args=(account.id,))
         data = {"created_at": "2020-01-01T00:00:00Z", "updated_at": "2020-01-01T00:00:00Z", "is_active": False}
         resp = self.client.patch(url, data)
@@ -225,6 +351,62 @@ class AccountTests(BaseAPITest):
         self.assertEqual(resp.status_code, 204)
         account.refresh_from_db()
         self.assertFalse(account.is_active)
+
+    def test_create_account_with_invalid_type_category_combination(self):
+        url = reverse("account-list")
+        data = {
+            "name": "Bad Combo",
+            "type": AccountType.ASSET,
+            "category": AccountCategory.CREDIT_CARD,
+            "currency": AccountCurrency.USD,
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 400)
+
+    def test_create_account_with_valid_type_category_combinations(self):
+        url = reverse("account-list")
+        valid_combos = [
+            (AccountType.ASSET, AccountCategory.CASH),
+            (AccountType.ASSET, AccountCategory.INVESTMENTS),
+            (AccountType.LIABILITY, AccountCategory.LOAN),
+            (AccountType.LIABILITY, AccountCategory.MORTGAGE),
+            (AccountType.EQUITY, AccountCategory.OTHER),
+        ]
+        for i, (account_type, account_category) in enumerate(valid_combos):
+            data = {
+                "name": f"Account {i}",
+                "type": account_type,
+                "category": account_category,
+                "currency": AccountCurrency.USD,
+            }
+            resp = self.client.post(url, data)
+            self.assertEqual(resp.status_code, 201, msg=f"Expected 201 for {account_type}/{account_category}")
+
+    def test_update_account_category_incompatible_with_type(self):
+        account = AccountFactory.create(
+            user=self.user,
+            type=AccountType.ASSET,
+            category=AccountCategory.CASH,
+        )
+        url = reverse("account-detail", args=(account.id,))
+        data = {"category": AccountCategory.LOAN}
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 400)
+        account.refresh_from_db()
+        self.assertEqual(account.category, AccountCategory.CASH)
+
+    def test_update_account_type_makes_category_invalid(self):
+        account = AccountFactory.create(
+            user=self.user,
+            type=AccountType.LIABILITY,
+            category=AccountCategory.LOAN,
+        )
+        url = reverse("account-detail", args=(account.id,))
+        data = {"type": AccountType.EQUITY}
+        resp = self.client.patch(url, data)
+        self.assertEqual(resp.status_code, 400)
+        account.refresh_from_db()
+        self.assertEqual(account.type, AccountType.LIABILITY)
 
 
 class ImportTransactionTests(BaseAPITest):

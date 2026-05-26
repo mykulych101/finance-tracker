@@ -29,3 +29,21 @@ class AccountCurrency(models.TextChoices):
     USD = "USD", "USD"
     EUR = "EUR", "EUR"
     UAN = "UAN", "UAN"
+
+
+VALID_CATEGORIES_BY_TYPE = {
+    AccountType.ASSET: [
+        AccountCategory.CASH,
+        AccountCategory.INVESTMENTS,
+        AccountCategory.REAL_ESTATE,
+        AccountCategory.CRYPTO,
+        AccountCategory.OTHER,
+    ],
+    AccountType.LIABILITY: [
+        AccountCategory.CREDIT_CARD,
+        AccountCategory.LOAN,
+        AccountCategory.MORTGAGE,
+        AccountCategory.OTHER,
+    ],
+    AccountType.EQUITY: [AccountCategory.OTHER],
+}
