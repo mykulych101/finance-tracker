@@ -1,9 +1,14 @@
+import threading
 from datetime import date
 from decimal import Decimal
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connections
+from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import AccessToken
 
 from accounts.api.factories import AccountFactory
 from accounts.constants import AccountCategory, AccountCurrency, AccountType
@@ -13,6 +18,7 @@ from balances.models import BalanceRecord
 from core.api.tests import BaseAPITest
 from transactions.constants import TransactionType
 from transactions.models import Transaction
+from users.models import User
 
 
 class AccountTests(BaseAPITest):
@@ -505,4 +511,78 @@ class ImportTransactionTests(BaseAPITest):
         resp = self.client.post(self.url, {"file": file}, format="multipart")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["imported"], 1)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 1)
+
+    def test_concurrent_imports(self):
+        file1 = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+        )
+        file2 = self._make_csv(
+            "23.04.2026 12:00:00,Coffee,-50.00,Food",
+        )
+        resp1 = self.client.post(self.url, {"file": file1}, format="multipart")
+        resp2 = self.client.post(self.url, {"file": file2}, format="multipart")
+        self.assertEqual(resp1.status_code, 200)
+        self.assertEqual(resp2.status_code, 200)
+        self.assertEqual(resp1.data["imported"], 1)
+        self.assertEqual(resp2.data["imported"], 1)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 2)
+
+
+class ConcurrentImportRegressionTests(TransactionTestCase):
+    """Regression: two threads submitting the same file must not both succeed.
+
+    Uses TransactionTestCase (no wrapping savepoint) so each thread opens an
+    independent DB connection and actually contends on the account row lock.
+    """
+
+    CSV_HEADER = "Date and time,Description,Amount,Category"
+    client_class = APIClient
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="concurrent@test.com",
+            password="qwerty123456",
+            name="Concurrent User",
+        )
+        self.user.is_active = True
+        self.user.save(update_fields=["is_active"])
+        token = AccessToken.for_user(self.user)
+        self.auth_header = f"Bearer {token}"
+        self.account = AccountFactory.create(user=self.user)
+        self.url = reverse("account-import-transaction", args=(self.account.id,))
+
+    def _make_csv(self, *rows):
+        content = "\n".join([self.CSV_HEADER, *rows]).encode("utf-8")
+        return SimpleUploadedFile("transactions.csv", content, content_type="text/csv")
+
+    def test_concurrent_imports_same_file_only_one_succeeds(self):
+        statuses = []
+        errors = []
+        barrier = threading.Barrier(2)
+
+        def do_import():
+            client = APIClient()
+            client.credentials(HTTP_AUTHORIZATION=self.auth_header)
+            file = self._make_csv("22.04.2026 10:00:00,Salary,1000.00,Electronics")
+            barrier.wait()
+            try:
+                resp = client.post(self.url, {"file": file}, format="multipart")
+                statuses.append(resp.status_code)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+            finally:
+                connections.close_all()
+
+        threads = [threading.Thread(target=do_import) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            sorted(statuses),
+            [200, 400],
+        )
         self.assertEqual(Transaction.objects.filter(account=self.account).count(), 1)

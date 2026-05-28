@@ -1,6 +1,7 @@
 import hashlib
 
 import tablib
+from django.db import IntegrityError
 from django.db.transaction import atomic
 from drf_spectacular.utils import extend_schema
 from import_export.results import RowResult
@@ -50,6 +51,7 @@ class AccountViewSet(ModelViewSet):
     @action(detail=True, methods=["POST"], parser_classes=[MultiPartParser])
     def import_transaction(self, request, *args, **kwargs):
         account = self.get_object()
+        Account.objects.select_for_update().get(pk=account.pk)
         file = request.FILES.get("file")
         if not file:
             raise ValidationError({"error": "No file provided"})
@@ -59,9 +61,10 @@ class AccountViewSet(ModelViewSet):
             book = tablib.Dataset().load(file_bytes.decode("utf-8"), format="csv")
         except (tablib.UnsupportedFormat, tablib.InvalidDimensions, ValueError, IndexError) as e:
             raise ValidationError({"error": f"Invalid file format: {e}"})
-        if TransactionImport.objects.filter(account=account, file_hash=file_hash).exists():
+        try:
+            TransactionImport.objects.create(account=account, file_hash=file_hash)
+        except IntegrityError:
             raise ValidationError({"error": "This file has already been imported for this account"})
-        TransactionImport.objects.create(account=account, file_hash=file_hash)
 
         resource = TransactionResource(account=account)
         result = resource.import_data(book, dry_run=False)

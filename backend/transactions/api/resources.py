@@ -50,11 +50,16 @@ class TransactionResource(resources.ModelResource):
         column_name="Category",
         widget=widgets.CharWidget(),
     )
+    import_fingerprint = fields.Field(
+        attribute="import_fingerprint",
+        column_name="import_fingerprint",
+        widget=widgets.CharWidget(),
+    )
 
     class Meta:
         model = Transaction
         import_id_fields = ()
-        fields = ("date", "amount", "type", "description", "raw_category")
+        fields = ("date", "amount", "type", "description", "raw_category", "import_fingerprint")
 
     def __init__(self, account, **kwargs):
         super().__init__(**kwargs)
@@ -89,10 +94,10 @@ class TransactionResource(resources.ModelResource):
             return  # widget will raise the proper ValidationError
         row["type"] = TransactionType.INCOME if raw_amount >= 0 else TransactionType.EXPENSE
         row["Amount"] = str(abs(raw_amount))
+        row["import_fingerprint"] = self._compute_fingerprint(row)
 
     def skip_row(self, instance, original, row, import_validation_errors=None):
-        self._current_fingerprint = self._compute_fingerprint(row)
-        if self._current_fingerprint in self._existing_fingerprints:
+        if row["import_fingerprint"] in self._existing_fingerprints:
             return True
         return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
 
@@ -105,7 +110,7 @@ class TransactionResource(resources.ModelResource):
                 "date": instance.date,
                 "description": instance.description or "",
                 "raw_category": instance.raw_category or "",
-                "import_fingerprint": self._current_fingerprint,
+                "import_fingerprint": instance.import_fingerprint,
             }
         )
-        self._existing_fingerprints.add(self._current_fingerprint)
+        self._existing_fingerprints.add(instance.import_fingerprint)

@@ -19,6 +19,7 @@
         "dateutil",
         "dayfirst",
         "filterset",
-        "viewsets"
+        "viewsets",
+        "genbadge"
     ]
 }
