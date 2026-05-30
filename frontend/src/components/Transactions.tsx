@@ -49,7 +49,7 @@ export const Transactions = () => {
   useEffect(() => {
     setValue('page', 1);
   }, [formValues.type, formValues.account, formValues.dateAfter, formValues.dateBefore,
-      debouncedDescription, debouncedRawCategory, setValue]);
+    debouncedDescription, debouncedRawCategory, setValue]);
 
   const { data, isLoading } = useTransactionsListQuery(queryArg);
   const { data: accountsData } = useAccountsAutocompleteListQuery({ pageSize: allPages });
@@ -94,16 +94,6 @@ export const Transactions = () => {
           {/* Filter bar — row 1: categorical + date filters */}
           <div className="flex flex-wrap gap-3 mb-3">
             <select
-              value={queryArg.type ?? ''}
-              onChange={e => setValue('type', (e.target.value || undefined) as 'income' | 'expense' | undefined)}
-              className={inputClass}
-            >
-              <option value="">All types</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-
-            <select
               value={queryArg.account?.[0] ?? ''}
               onChange={e => setValue('account', e.target.value ? [Number(e.target.value)] : undefined)}
               className={inputClass}
@@ -113,15 +103,24 @@ export const Transactions = () => {
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
+            <select
+              value={queryArg.type ?? ''}
+              onChange={e => setValue('type', (e.target.value || undefined) as 'income' | 'expense' | undefined)}
+              className={inputClass}
+            >
+              <option value="">All types</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
 
-            <input type="date" {...register('dateAfter')}  className={inputClass} />
+            <input type="date" {...register('dateAfter')} className={inputClass} />
             <input type="date" {...register('dateBefore')} className={inputClass} />
           </div>
 
           {/* Filter bar — row 2: text search filters */}
           <div className="flex gap-3 mb-6">
             <input type="text" {...register('description')} placeholder="Description" className={`${inputClass} flex-1`} />
-            <input type="text" {...register('rawCategory')} placeholder="Category"    className={`${inputClass} flex-1`} />
+            <input type="text" {...register('rawCategory')} placeholder="Category" className={`${inputClass} flex-1`} />
           </div>
 
           {/* Content */}
@@ -157,19 +156,17 @@ export const Transactions = () => {
                         <td className="py-3 pr-4 text-gray-700 dark:text-neutral-300">{t.date}</td>
                         <td className="py-3 pr-4 text-gray-700 dark:text-neutral-300">{t.account.name}</td>
                         <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            t.type === 'income'
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${t.type === 'income'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            }`}>
                             {t.type}
                           </span>
                         </td>
-                        <td className={`py-3 pr-4 font-medium ${
-                          t.type === 'income'
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
+                        <td className={`py-3 pr-4 font-medium ${t.type === 'income'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                          }`}>
                           {t.type === 'expense' ? '−' : '+'}{t.amount}
                         </td>
                         <td className="py-3 pr-4 text-gray-500 dark:text-neutral-400">{t.description ?? '—'}</td>

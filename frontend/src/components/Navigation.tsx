@@ -22,11 +22,11 @@ const Navigation = () => {
 
   const navItems = [
     { href: '/', label: 'Balance Sheet', icon: '📊' },
+    { href: '/transactions', label: 'Transactions', icon: '💳' },
     { href: '/add-account', label: 'Add Account', icon: '➕' },
     { href: '/record-balances', label: 'Record Balances', icon: '💰' },
     { href: '/bank-statements', label: 'Bank Statements', icon: '🏦' },
     { href: '/historical', label: 'Historical Tracking', icon: '📈' },
-    { href: '/transactions', label: 'Transactions', icon: '💳' },
   ];
 
   const toggleMobileMenu = () => {

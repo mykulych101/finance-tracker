@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useCurrency, SUPPORTED_CURRENCIES } from '@/context/CurrencyContext';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setConvertTo } from '@/redux/currencySlice';
+import type { CurrencyEnum } from '@/redux/api';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface CurrencySelectorProps {
@@ -10,12 +12,21 @@ interface CurrencySelectorProps {
   showLabel?: boolean;
 }
 
+export const CURRENCY_SYMBOLS: Record<CurrencyEnum, string> = {
+  USD: '$',
+  EUR: '€',
+  UAN: '₴',
+};
+
+const CURRENCY_OPTIONS: CurrencyEnum[] = ['USD', 'EUR', 'UAN'];
+
 export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   className = '',
   size = 'md',
   showLabel = true
 }) => {
-  const { selectedCurrency, setSelectedCurrency } = useCurrency();
+  const dispatch = useAppDispatch();
+  const convertTo = useAppSelector(state => state.currency.convertTo);
   const { trackEvent } = useAnalytics();
 
   const sizeClasses = {
@@ -24,16 +35,13 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
     lg: 'px-4 py-3 text-base'
   };
 
-  const handleCurrencyChange = (currencyCode: string) => {
-    const currency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode);
-    if (currency) {
-      setSelectedCurrency(currency);
-      // Track currency change
-      trackEvent('currency_changed', {
-        from_currency: selectedCurrency.code,
-        to_currency: currency.code,
-      });
-    }
+  const handleChange = (value: string) => {
+    const next = value === '' ? null : value as CurrencyEnum;
+    trackEvent('currency_changed', {
+      from_currency: convertTo ?? 'default',
+      to_currency: next ?? 'default',
+    });
+    dispatch(setConvertTo(next));
   };
 
   return (
@@ -45,19 +53,19 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
       )}
       <select
         id="currency-select"
-        value={selectedCurrency.code}
-        onChange={(e) => handleCurrencyChange(e.target.value)}
+        value={convertTo ?? ''}
+        onChange={(e) => handleChange(e.target.value)}
         className={`
           ${sizeClasses[size]}
           border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100
-          ${className}
         `}
       >
-        {SUPPORTED_CURRENCIES.map((currency) => (
-          <option key={currency.code} value={currency.code}>
-            {currency.symbol} {currency.code} - {currency.name}
+        <option value="">Default</option>
+        {CURRENCY_OPTIONS.map((currency) => (
+          <option key={currency} value={currency}>
+            {CURRENCY_SYMBOLS[currency]} {currency}
           </option>
         ))}
       </select>

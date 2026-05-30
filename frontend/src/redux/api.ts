@@ -21,6 +21,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/accounts/`,
           params: {
+            convert_to: queryArg.convertTo,
             page: queryArg.page,
             page_size: queryArg.pageSize,
           },
@@ -117,6 +118,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/api/analytics/net_worth/`,
           params: {
+            convert_to: queryArg.convertTo,
             date: queryArg.date,
           },
         }),
@@ -363,6 +365,8 @@ export { injectedRtkApi as backendApi };
 export type AccountsListApiResponse =
   /** status 200  */ PaginatedAccountListRead;
 export type AccountsListApiArg = {
+  /** Convert all balances to. this currency. */
+  convertTo?: "EUR" | "UAN" | "USD";
   /** A page number within the paginated result set. */
   page?: number;
   /** Number of results to return per page. */
@@ -418,6 +422,8 @@ export type ActivateRetrieveApiArg = {
 export type AnalyticsNetWorthRetrieveApiResponse =
   /** status 200  */ AnalyticsNetWorthRead;
 export type AnalyticsNetWorthRetrieveApiArg = {
+  /** Convert all balances to this currency. */
+  convertTo?: "EUR" | "UAN" | "USD";
   /** As-of date (YYYY-MM-DD). Defaults to today. */
   date?: string;
 };
@@ -656,14 +662,12 @@ export type AccountWithBalanceRead = {
   latest_balance: string;
 };
 export type AnalyticsNetWorth = {
-  date: string;
   net_worth: number;
   assets_total: number;
   liabilities_total: number;
   accounts: AccountWithBalance[];
 };
 export type AnalyticsNetWorthRead = {
-  date: string;
   net_worth: number;
   assets_total: number;
   liabilities_total: number;
