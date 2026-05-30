@@ -8,6 +8,15 @@ paths:
     get:
       operationId: accounts_list
       parameters:
+      - in: query
+        name: convert_to
+        schema:
+          type: string
+          enum:
+          - EUR
+          - UAN
+          - USD
+        description: Convert all balances to. this currency.
       - name: page
         required: false
         in: query
@@ -238,6 +247,15 @@ paths:
       operationId: analytics_net_worth_retrieve
       description: Get net worth summary for the user.
       parameters:
+      - in: query
+        name: convert_to
+        schema:
+          type: string
+          enum:
+          - EUR
+          - UAN
+          - USD
+        description: Convert all balances to this currency.
       - in: query
         name: date
         schema:
@@ -974,9 +992,6 @@ components:
     AnalyticsNetWorth:
       type: object
       properties:
-        date:
-          type: string
-          format: date
         net_worth:
           type: number
           format: double
@@ -1005,7 +1020,6 @@ components:
       required:
       - accounts
       - assets_total
-      - date
       - liabilities_total
       - net_worth
     BalanceRecord:

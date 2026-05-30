@@ -1,8 +1,11 @@
+from decimal import Decimal
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from accounts.constants import VALID_CATEGORIES_BY_TYPE, AccountCategory
 from accounts.models import Account
+from integrations.monobank.converter import convert_amount
 
 
 class AccountSlimSerializer(serializers.ModelSerializer):
@@ -19,7 +22,12 @@ class AccountWithBalanceSerializer(AccountSlimSerializer):
 
     @extend_schema_field(serializers.DecimalField(max_digits=12, decimal_places=2))
     def get_latest_balance(self, obj):
-        return obj.latest_balance or 0
+        balance = obj.latest_balance or 0
+        convert_to = self.context.get("convert_to")
+        if convert_to and balance:
+            balance = convert_amount(balance, obj.currency, convert_to)
+        field = serializers.DecimalField(max_digits=12, decimal_places=2)
+        return field.to_representation(Decimal(str(balance)))
 
 
 class AccountSerializer(AccountWithBalanceSerializer):

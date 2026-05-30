@@ -1,6 +1,7 @@
 import threading
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connections
@@ -15,7 +16,7 @@ from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.models import Account
 from balances.api.factories import BalanceRecordFactory
 from balances.models import BalanceRecord
-from core.api.tests import BaseAPITest
+from core.api.tests import MOCK_RATES, BaseAPITest
 from transactions.constants import TransactionType
 from transactions.models import Transaction
 from users.models import User
@@ -64,9 +65,9 @@ class AccountTests(BaseAPITest):
         self.assertEqual(resp.status_code, 200)
         for account_data in resp.data["results"]:
             if account_data["id"] == account1.id:
-                self.assertEqual(account_data["latest_balance"], 100)
+                self.assertEqual(Decimal(account_data["latest_balance"]), Decimal(100))
             elif account_data["id"] == account2.id:
-                self.assertEqual(account_data["latest_balance"], 50)
+                self.assertEqual(Decimal(account_data["latest_balance"]), Decimal(50))
 
     def test_retrieve_account_by_id(self):
         account = AccountFactory.create(user=self.user)
@@ -95,6 +96,39 @@ class AccountTests(BaseAPITest):
         required_fields = {"id", "name"}
         for field in required_fields:
             self.assertIn(field, resp.data["results"][0])
+
+    def test_convert_latest_balance_uan_usd(self):
+        with patch("integrations.monobank.client.fetch_rates", return_value=MOCK_RATES):
+            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAN)
+            BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
+            url = reverse("account-list") + "?convert_to=USD"
+            resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        account = resp.data["results"][0]
+        self.assertEqual(account["id"], uan_account.id)
+        self.assertEqual(Decimal(account["latest_balance"]), Decimal("225.05"))
+
+    def test_convert_latest_balance_uan_eur(self):
+        with patch("integrations.monobank.client.fetch_rates", return_value=MOCK_RATES):
+            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAN)
+            BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
+            url = reverse("account-list") + "?convert_to=EUR"
+            resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        account = resp.data["results"][0]
+        self.assertEqual(account["id"], uan_account.id)
+        self.assertEqual(Decimal(account["latest_balance"]), Decimal("193.05"))
+
+    def test_convert_latest_balance_eur_usd(self):
+        with patch("integrations.monobank.client.fetch_rates", return_value=MOCK_RATES):
+            eur_account = AccountFactory.create(user=self.user, currency=AccountCurrency.EUR)
+            BalanceRecordFactory.create(account=eur_account, date=timezone.localdate(), amount=100)
+            url = reverse("account-list") + "?convert_to=USD"
+            resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        account = resp.data["results"][0]
+        self.assertEqual(account["id"], eur_account.id)
+        self.assertEqual(Decimal(account["latest_balance"]), Decimal("115.34"))
 
     def test_create_account(self):
         url = reverse("account-list")

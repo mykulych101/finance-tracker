@@ -20,6 +20,7 @@
         "dayfirst",
         "filterset",
         "viewsets",
-        "genbadge"
+        "genbadge",
+        "MONOBANK"
     ]
 }

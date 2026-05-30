@@ -3,7 +3,7 @@ import hashlib
 import tablib
 from django.db import IntegrityError
 from django.db.transaction import atomic
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from import_export.results import RowResult
 from rest_framework import status
 from rest_framework.decorators import action
@@ -14,15 +14,36 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from accounts.api.serializers import AccountSerializer, AccountSlimSerializer, WriteAccountSerializer
+from accounts.constants import AccountCurrency
 from accounts.models import Account
 from transactions.api.resources import TransactionResource
 from transactions.models import TransactionImport
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="convert_to",
+                location=OpenApiParameter.QUERY,
+                required=False,
+                enum=AccountCurrency.values,
+                description="Convert all balances to. this currency.",
+            )
+        ]
+    )
+)
 class AccountViewSet(ModelViewSet):
     autocomplete_serializer_class = AccountSlimSerializer
     permission_classes = [IsAuthenticated]
     queryset = Account.objects.all()
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        convert_to = self.request.query_params.get("convert_to")
+        if convert_to and convert_to in AccountCurrency.values:
+            ctx["convert_to"] = convert_to
+        return ctx
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:

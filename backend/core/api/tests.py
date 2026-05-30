@@ -6,6 +6,11 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from users.models import User
 
+MOCK_RATES = [
+    {"currencyCodeA": 840, "currencyCodeB": 980, "rateBuy": 44.04, "rateSell": 44.4346},
+    {"currencyCodeA": 978, "currencyCodeB": 980, "rateBuy": 51.25, "rateSell": 51.8001},
+]
+
 
 class Colors(TextChoices):
     HEADER = "\033[95m"
