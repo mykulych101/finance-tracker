@@ -98,7 +98,7 @@ class AccountTests(BaseAPITest):
             self.assertIn(field, resp.data["results"][0])
 
     def test_convert_latest_balance_uan_usd(self):
-        with patch("integrations.monobank.converter.get_exchange_rates", return_value=MOCK_RATES):
+        with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
             uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAN)
             BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
             url = reverse("account-list") + "?convert_to=USD"
@@ -109,7 +109,7 @@ class AccountTests(BaseAPITest):
         self.assertEqual(Decimal(account["latest_balance"]), Decimal("225.05"))
 
     def test_convert_latest_balance_uan_eur(self):
-        with patch("integrations.monobank.converter.get_exchange_rates", return_value=MOCK_RATES):
+        with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
             uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAN)
             BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
             url = reverse("account-list") + "?convert_to=EUR"
@@ -120,7 +120,7 @@ class AccountTests(BaseAPITest):
         self.assertEqual(Decimal(account["latest_balance"]), Decimal("193.05"))
 
     def test_convert_latest_balance_eur_usd(self):
-        with patch("integrations.monobank.converter.get_exchange_rates", return_value=MOCK_RATES):
+        with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
             eur_account = AccountFactory.create(user=self.user, currency=AccountCurrency.EUR)
             BalanceRecordFactory.create(account=eur_account, date=timezone.localdate(), amount=100)
             url = reverse("account-list") + "?convert_to=USD"

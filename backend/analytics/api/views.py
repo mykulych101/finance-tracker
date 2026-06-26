@@ -10,6 +10,7 @@ from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.models import Account
 from analytics.api.serializers import AnalyticsNetWorthSerializer
 from integrations.monobank.converter import convert_amount
+from integrations.monobank.service import get_exchange_rates
 
 
 @extend_schema_view(
@@ -53,12 +54,13 @@ class AnalyticsViewSet(GenericViewSet):
         accounts = self.get_queryset(balance_date=balance_date)
 
         accounts = list(accounts)
+        rates = get_exchange_rates() if convert_to else []
         assets_total = Decimal(0)
         liabilities_total = Decimal(0)
         for account in accounts:
             balance = Decimal(str(account.latest_balance or 0))
             if convert_to:
-                balance = convert_amount(balance, account.currency, convert_to)
+                balance = convert_amount(balance, account.currency, convert_to, rates)
 
             if account.type == AccountType.ASSET:
                 assets_total += balance
@@ -66,7 +68,7 @@ class AnalyticsViewSet(GenericViewSet):
                 if account.category == AccountCategory.CREDIT_CARD:
                     limit = Decimal(str(account.credit_limit or 0))
                     if convert_to:
-                        limit = convert_amount(limit, account.currency, convert_to)
+                        limit = convert_amount(limit, account.currency, convert_to, rates)
                     liabilities_total += limit - balance
                 else:
                     liabilities_total += balance
@@ -81,7 +83,7 @@ class AnalyticsViewSet(GenericViewSet):
                 "liabilities_total": liabilities_total,
                 "net_worth": assets_total - liabilities_total,
             },
-            context={"convert_to": convert_to} if convert_to else {},
+            context={"convert_to": convert_to, "rates": rates} if convert_to else {},
         )
 
         return Response(serializer.data)

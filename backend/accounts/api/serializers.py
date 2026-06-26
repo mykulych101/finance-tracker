@@ -25,7 +25,7 @@ class AccountWithBalanceSerializer(AccountSlimSerializer):
         balance = obj.latest_balance or 0
         convert_to = self.context.get("convert_to")
         if convert_to and balance:
-            balance = convert_amount(balance, obj.currency, convert_to)
+            balance = convert_amount(balance, obj.currency, convert_to, self.context["rates"])
         field = serializers.DecimalField(max_digits=12, decimal_places=2)
         return field.to_representation(Decimal(str(balance)))
 

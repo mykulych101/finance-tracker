@@ -1,7 +1,5 @@
 from decimal import Decimal
 
-from integrations.monobank.service import get_exchange_rates
-
 CURRENCY_CODE_MAP = {"USD": 840, "EUR": 978, "UAN": 980}
 UAH_CODE = 980
 
@@ -30,10 +28,9 @@ def _from_uah(amount: Decimal, to_currency: str, rates: list[dict]) -> Decimal:
     return amount / Decimal(str(rate["rateSell"]))  # bank sells to you → what you'd pay per unit
 
 
-def convert_amount(amount: Decimal, from_currency: str, to_currency: str) -> Decimal:
+def convert_amount(amount: Decimal, from_currency: str, to_currency: str, rates: list[dict]) -> Decimal:
     if from_currency == to_currency:
         return amount
-    rates = get_exchange_rates()
     if to_currency == "UAN":
         return _to_uah(amount, from_currency, rates)
     if from_currency == "UAN":

@@ -16,6 +16,7 @@ from rest_framework.viewsets import ModelViewSet
 from accounts.api.serializers import AccountSerializer, AccountSlimSerializer, WriteAccountSerializer
 from accounts.constants import AccountCurrency
 from accounts.models import Account
+from integrations.monobank.service import get_exchange_rates
 from transactions.api.resources import TransactionResource
 from transactions.models import TransactionImport
 
@@ -43,6 +44,7 @@ class AccountViewSet(ModelViewSet):
         convert_to = self.request.query_params.get("convert_to")
         if convert_to and convert_to in AccountCurrency.values:
             ctx["convert_to"] = convert_to
+            ctx["rates"] = get_exchange_rates()
         return ctx
 
     def get_serializer_class(self):

@@ -80,7 +80,7 @@ class AnalyticsTests(BaseAPITest):
         BalanceRecordFactory.create(account=liability, amount=4000, date=today)
 
         url = reverse("analytics-net-worth") + "?convert_to=USD"
-        with patch("integrations.monobank.converter.get_exchange_rates", return_value=MOCK_RATES):
+        with patch("analytics.api.views.get_exchange_rates", return_value=MOCK_RATES):
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -100,7 +100,7 @@ class AnalyticsTests(BaseAPITest):
         BalanceRecordFactory.create(account=credit_card, amount=2000, date=today)
 
         url = reverse("analytics-net-worth") + "?convert_to=USD"
-        with patch("integrations.monobank.converter.get_exchange_rates", return_value=MOCK_RATES):
+        with patch("analytics.api.views.get_exchange_rates", return_value=MOCK_RATES):
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -126,7 +126,7 @@ class AnalyticsTests(BaseAPITest):
         BalanceRecordFactory.create(account=uan_asset, amount=10000, date=today)
 
         url = reverse("analytics-net-worth")
-        with patch("integrations.monobank.converter.get_exchange_rates", return_value=MOCK_RATES):
+        with patch("analytics.api.views.get_exchange_rates", return_value=MOCK_RATES):
             response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
