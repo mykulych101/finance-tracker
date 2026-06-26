@@ -14,7 +14,7 @@ paths:
           type: string
           enum:
           - EUR
-          - UAN
+          - UAH
           - USD
         description: Convert all balances to. this currency.
       - name: page
@@ -253,7 +253,7 @@ paths:
           type: string
           enum:
           - EUR
-          - UAN
+          - UAH
           - USD
         description: Convert all balances to this currency.
       - in: query
@@ -1083,12 +1083,12 @@ components:
       enum:
       - USD
       - EUR
-      - UAN
+      - UAH
       type: string
       description: |-
         * `USD` - USD
         * `EUR` - EUR
-        * `UAN` - UAN
+        * `UAH` - UAH
     LoginResponse:
       type: object
       properties:

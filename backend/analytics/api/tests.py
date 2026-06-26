@@ -23,20 +23,20 @@ class AnalyticsTests(BaseAPITest):
             user=self.user,
             type=AccountType.ASSET,
             category=AccountCategory.CASH,
-            currency=AccountCurrency.UAN,
+            currency=AccountCurrency.UAH,
         )
         AccountFactory.create_batch(
             2,
             user=self.user,
             type=AccountType.LIABILITY,
             category=AccountCategory.MORTGAGE,
-            currency=AccountCurrency.UAN,
+            currency=AccountCurrency.UAH,
         )
         credit_card_account = AccountFactory.create(
             user=self.user,
             type=AccountType.LIABILITY,
             category=AccountCategory.CREDIT_CARD,
-            currency=AccountCurrency.UAN,
+            currency=AccountCurrency.UAH,
             credit_limit=10000,
         )
 
@@ -52,7 +52,7 @@ class AnalyticsTests(BaseAPITest):
         BalanceRecordFactory.create(account=credit_card_account, amount=3000, date=date_past)
 
         url = reverse("analytics-net-worth")
-        with self.assertNumQueries(2):
+        with patch("analytics.api.views.get_exchange_rates", return_value=[]), self.assertNumQueries(2):
             response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["assets_total"], 20000)
@@ -71,10 +71,10 @@ class AnalyticsTests(BaseAPITest):
     def test_net_worth_convert_to_usd(self):
         today = timezone.localdate()
         asset = AccountFactory.create(
-            user=self.user, type=AccountType.ASSET, category=AccountCategory.CASH, currency=AccountCurrency.UAN
+            user=self.user, type=AccountType.ASSET, category=AccountCategory.CASH, currency=AccountCurrency.UAH
         )
         liability = AccountFactory.create(
-            user=self.user, type=AccountType.LIABILITY, category=AccountCategory.MORTGAGE, currency=AccountCurrency.UAN
+            user=self.user, type=AccountType.LIABILITY, category=AccountCategory.MORTGAGE, currency=AccountCurrency.UAH
         )
         BalanceRecordFactory.create(account=asset, amount=10000, date=today)
         BalanceRecordFactory.create(account=liability, amount=4000, date=today)
@@ -94,7 +94,7 @@ class AnalyticsTests(BaseAPITest):
             user=self.user,
             type=AccountType.LIABILITY,
             category=AccountCategory.CREDIT_CARD,
-            currency=AccountCurrency.UAN,
+            currency=AccountCurrency.UAH,
             credit_limit=10000,
         )
         BalanceRecordFactory.create(account=credit_card, amount=2000, date=today)
@@ -120,7 +120,7 @@ class AnalyticsTests(BaseAPITest):
             user=self.user,
             type=AccountType.ASSET,
             category=AccountCategory.CASH,
-            currency=AccountCurrency.UAN,
+            currency=AccountCurrency.UAH,
         )
         BalanceRecordFactory.create(account=usd_asset, amount=100, date=today)
         BalanceRecordFactory.create(account=uan_asset, amount=10000, date=today)

@@ -47,7 +47,7 @@ class AnalyticsViewSet(GenericViewSet):
     @action(detail=False, methods=["GET"])
     def net_worth(self, request, *args, **kwargs):
         balance_date = request.query_params.get("date")
-        convert_to = request.query_params.get("convert_to", AccountCurrency.UAN)
+        convert_to = request.query_params.get("convert_to", AccountCurrency.UAH)
         if convert_to not in AccountCurrency.values:
             convert_to = None
 

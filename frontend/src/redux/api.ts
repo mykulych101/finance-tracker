@@ -366,7 +366,7 @@ export type AccountsListApiResponse =
   /** status 200  */ PaginatedAccountListRead;
 export type AccountsListApiArg = {
   /** Convert all balances to. this currency. */
-  convertTo?: "EUR" | "UAN" | "USD";
+  convertTo?: "EUR" | "UAH" | "USD";
   /** A page number within the paginated result set. */
   page?: number;
   /** Number of results to return per page. */
@@ -423,7 +423,7 @@ export type AnalyticsNetWorthRetrieveApiResponse =
   /** status 200  */ AnalyticsNetWorthRead;
 export type AnalyticsNetWorthRetrieveApiArg = {
   /** Convert all balances to this currency. */
-  convertTo?: "EUR" | "UAN" | "USD";
+  convertTo?: "EUR" | "UAH" | "USD";
   /** As-of date (YYYY-MM-DD). Defaults to today. */
   date?: string;
 };
@@ -587,7 +587,7 @@ export type CategoryEnum =
   | "loan"
   | "mortgage"
   | "other";
-export type CurrencyEnum = "USD" | "EUR" | "UAN";
+export type CurrencyEnum = "USD" | "EUR" | "UAH";
 export type Account = {
   name: string;
   type: AccountTypeEnum;

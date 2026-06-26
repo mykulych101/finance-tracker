@@ -15,10 +15,10 @@ interface CurrencySelectorProps {
 export const CURRENCY_SYMBOLS: Record<CurrencyEnum, string> = {
   USD: '$',
   EUR: '€',
-  UAN: '₴',
+  UAH: '₴',
 };
 
-const CURRENCY_OPTIONS: CurrencyEnum[] = ['USD', 'EUR', 'UAN'];
+const CURRENCY_OPTIONS: CurrencyEnum[] = ['USD', 'EUR', 'UAH'];
 
 export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   className = '',

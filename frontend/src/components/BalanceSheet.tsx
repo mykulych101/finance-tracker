@@ -14,7 +14,7 @@ import type { CurrencyEnum } from '@/redux/api';
 import { renderSnakeCase } from '@/lib/renderSnakeCase';
 
 const currencyLabel = (currency: CurrencyEnum | null | undefined): string =>
-  CURRENCY_SYMBOLS[currency ?? 'UAN'];
+  CURRENCY_SYMBOLS[currency ?? 'UAH'];
 
 const AccountSection = ({ title, accounts, total, type, isDestroying, setEditingAccount, setAccountToDelete, convertTo }: {
   title: string;

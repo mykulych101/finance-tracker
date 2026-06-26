@@ -99,7 +99,7 @@ class AccountTests(BaseAPITest):
 
     def test_convert_latest_balance_uan_usd(self):
         with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
-            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAN)
+            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAH)
             BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
             url = reverse("account-list") + "?convert_to=USD"
             resp = self.client.get(url)
@@ -110,7 +110,7 @@ class AccountTests(BaseAPITest):
 
     def test_convert_latest_balance_uan_eur(self):
         with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
-            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAN)
+            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAH)
             BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
             url = reverse("account-list") + "?convert_to=EUR"
             resp = self.client.get(url)

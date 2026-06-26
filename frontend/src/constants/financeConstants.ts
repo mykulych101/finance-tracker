@@ -7,4 +7,4 @@ export const ACCOUNT_CATEGORIES: ACCOUNT_CATEGORIES_TYPE = {
     liability: ['credit_card', 'loan', 'mortgage', 'other'],
     equity: ['other'],
 };
-export const CURRENCY_OPTIONS: CurrencyEnum[] = ['USD', 'EUR', 'UAN'];
+export const CURRENCY_OPTIONS: CurrencyEnum[] = ['USD', 'EUR', 'UAH'];

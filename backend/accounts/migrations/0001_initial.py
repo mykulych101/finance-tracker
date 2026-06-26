@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=255)),
                 ('type', models.CharField(choices=[('asset', 'Asset'), ('liability', 'Liability'), ('equity', 'Equity')], max_length=255)),
                 ('category', models.CharField(choices=[('cash', 'Cash'), ('investments', 'Investments'), ('real_estate', 'Real Estate'), ('crypto', 'Crypto'), ('credit_card', 'Credit Card'), ('loan', 'Loan'), ('mortgage', 'Mortgage'), ('other', 'Other')], max_length=255)),
-                ('currency', models.CharField(choices=[('USD', 'USD'), ('EUR', 'EUR'), ('UAN', 'UAN')], max_length=255)),
+                ('currency', models.CharField(choices=[('USD', 'USD'), ('EUR', 'EUR'), ('UAH', 'UAH')], max_length=255)),
                 ('is_active', models.BooleanField(default=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),

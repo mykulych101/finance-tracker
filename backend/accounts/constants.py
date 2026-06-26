@@ -22,13 +22,13 @@ class AccountCategory(models.TextChoices):
     OTHER = "other", "Other"
 
 
-# UAN/USD/EUR
+# UAH/USD/EUR
 class AccountCurrency(models.TextChoices):
     """Defines the currencies that can be used for accounts in the system."""
 
     USD = "USD", "USD"
     EUR = "EUR", "EUR"
-    UAN = "UAN", "UAN"
+    UAH = "UAH", "UAH"
 
 
 VALID_CATEGORIES_BY_TYPE = {
