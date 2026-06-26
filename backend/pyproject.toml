@@ -95,7 +95,7 @@ mccabe = { max-complexity = 14 }
 [tool.ruff.lint.per-file-ignores]
 "config/settings/*.py" = ["F403", "F405", "E402", "INP001", "ERA001", "PTH118", "ARG005"]
 "*/tests/*.py" = ["S106", "TID252", "PT027", "S101", "PT009"]
-"*/api/tests.py" = ["S106", "S101", "PT009"]
+"*/tests.py" = ["S106", "S101", "PT009"]
 "core/middleware.py" = ["S101"]
 "config/urls.py" = ["ERA001"]
 

@@ -75,6 +75,7 @@ tasks:
     desc: "Format code with ruff"
     dir: backend
     cmds:
+      - poetry run ruff format
       - poetry run ruff check . --fix
       - poetry run ruff format
   dev.lint.fe:

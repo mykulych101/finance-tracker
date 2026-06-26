@@ -7,8 +7,22 @@ from rest_framework_simplejwt.tokens import AccessToken
 from users.models import User
 
 MOCK_RATES = [
-    {"currencyCodeA": 840, "currencyCodeB": 980, "rateBuy": 44.04, "rateSell": 44.4346},
-    {"currencyCodeA": 978, "currencyCodeB": 980, "rateBuy": 51.25, "rateSell": 51.8001},
+    {
+        "currencyCodeA": 840,
+        "currencyCodeB": 980,
+        "date": 1552392228,
+        "rateBuy": 44.04,
+        "rateSell": 44.4346,
+        "rateCross": None,
+    },
+    {
+        "currencyCodeA": 978,
+        "currencyCodeB": 980,
+        "date": 1552392228,
+        "rateBuy": 51.25,
+        "rateSell": 51.8001,
+        "rateCross": None,
+    },
 ]
 
 
