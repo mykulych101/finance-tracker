@@ -88,6 +88,8 @@ ignore = [
   "PTH123", # open() vs Path()
   "ARG002", # unused method argument
   "PLC0415", # import not at top level
+  "FIX", # allow TODO/FIXME comments
+  "TD",  # no author/issue link required in TODO
 ]
 pydocstyle = { convention = "google" }
 mccabe = { max-complexity = 14 }

@@ -648,6 +648,18 @@
         "decorators": ""
     },
     {
+        "url": "/api/analytics/net-worth-history/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth-history",
+        "decorators": ""
+    },
+    {
+        "url": "/api/analytics/net-worth-history\\.<format>/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth-history",
+        "decorators": ""
+    },
+    {
         "url": "/api/",
         "module": "rest_framework.routers.APIRootView",
         "name": "api-root",

@@ -111,6 +111,23 @@ const injectedRtkApi = api
         }),
         providesTags: ["activate"],
       }),
+      analyticsNetWorthHistoryList: build.query<
+        AnalyticsNetWorthHistoryListApiResponse,
+        AnalyticsNetWorthHistoryListApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/api/analytics/net-worth-history/`,
+          params: {
+            account: queryArg.account,
+            convert_to: queryArg.convertTo,
+            date_after: queryArg.dateAfter,
+            date_before: queryArg.dateBefore,
+            id: queryArg.id,
+            period: queryArg.period,
+          },
+        }),
+        providesTags: ["analytics"],
+      }),
       analyticsNetWorthRetrieve: build.query<
         AnalyticsNetWorthRetrieveApiResponse,
         AnalyticsNetWorthRetrieveApiArg
@@ -419,6 +436,20 @@ export type ActivateRetrieveApiArg = {
   token: string;
   uidb64: string;
 };
+export type AnalyticsNetWorthHistoryListApiResponse =
+  /** status 200  */ AnalyticsNetWorthHistoryItem[];
+export type AnalyticsNetWorthHistoryListApiArg = {
+  account?: number;
+  /** Convert all balances to this currency. */
+  convertTo?: "EUR" | "UAH" | "USD";
+  dateAfter?: string;
+  dateBefore?: string;
+  id?: number;
+  /** * `daily` - Daily
+   * `weekly` - Weekly
+   * `monthly` - Monthly */
+  period?: "daily" | "monthly" | "weekly";
+};
 export type AnalyticsNetWorthRetrieveApiResponse =
   /** status 200  */ AnalyticsNetWorthRead;
 export type AnalyticsNetWorthRetrieveApiArg = {
@@ -636,10 +667,12 @@ export type PatchedWriteAccount = {
 };
 export type AccountSlim = {
   name: string;
+  currency: CurrencyEnum;
 };
 export type AccountSlimRead = {
   id: number;
   name: string;
+  currency: CurrencyEnum;
 };
 export type PaginatedAccountSlimList = {
   count: number;
@@ -652,6 +685,12 @@ export type PaginatedAccountSlimListRead = {
   next?: string | null;
   previous?: string | null;
   results: AccountSlimRead[];
+};
+export type AnalyticsNetWorthHistoryItem = {
+  date: string;
+  net_worth: number;
+  assets: number;
+  liabilities: number;
 };
 export type AccountWithBalance = {
   name: string;
@@ -874,6 +913,7 @@ export const {
   useAccountsImportTransactionCreateMutation,
   useAccountsAutocompleteListQuery,
   useActivateRetrieveQuery,
+  useAnalyticsNetWorthHistoryListQuery,
   useAnalyticsNetWorthRetrieveQuery,
   useBalancesListQuery,
   useBalancesCreateMutation,

@@ -11,7 +11,7 @@ from integrations.monobank.converter import convert_amount
 class AccountSlimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ("id", "name")
+        fields = ("id", "name", "currency")
 
 
 class AccountWithBalanceSerializer(AccountSlimSerializer):

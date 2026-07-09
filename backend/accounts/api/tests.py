@@ -93,7 +93,7 @@ class AccountTests(BaseAPITest):
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["count"], accounts_count)
-        required_fields = {"id", "name"}
+        required_fields = {"id", "name", "currency"}
         for field in required_fields:
             self.assertIn(field, resp.data["results"][0])
 
@@ -129,6 +129,14 @@ class AccountTests(BaseAPITest):
         account = resp.data["results"][0]
         self.assertEqual(account["id"], eur_account.id)
         self.assertEqual(Decimal(account["latest_balance"]), Decimal("115.34"))
+
+    def test_convert_latest_balance_no_rates_returns_503(self):
+        with patch("accounts.api.views.get_exchange_rates", return_value=[]):
+            uan_account = AccountFactory.create(user=self.user, currency=AccountCurrency.UAH)
+            BalanceRecordFactory.create(account=uan_account, date=timezone.localdate(), amount=10000)
+            url = reverse("account-list") + "?convert_to=USD"
+            resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 503)
 
     def test_create_account(self):
         url = reverse("account-list")

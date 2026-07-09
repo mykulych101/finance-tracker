@@ -16,6 +16,7 @@ from rest_framework.viewsets import ModelViewSet
 from accounts.api.serializers import AccountSerializer, AccountSlimSerializer, WriteAccountSerializer
 from accounts.constants import AccountCurrency
 from accounts.models import Account
+from core.api.exceptions import ExchangeRateUnavailable
 from integrations.monobank.service import get_exchange_rates
 from transactions.api.resources import TransactionResource
 from transactions.models import TransactionImport
@@ -50,7 +51,16 @@ class AccountViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
             return WriteAccountSerializer
+        if self.action == "autocomplete":
+            return self.autocomplete_serializer_class
         return AccountSerializer
+
+    def list(self, request, *args, **kwargs):
+        # Balances are converted lazily during serialization; a missing rate raises here.
+        try:
+            return super().list(request, *args, **kwargs)
+        except ValueError as exc:
+            raise ExchangeRateUnavailable from exc
 
     def get_queryset(self):
         return Account.objects.with_latest_balance().filter(user=self.request.user, is_active=True)
