@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from balances.models import BalanceRecord
+from .models import BalanceRecord
 
 
 @admin.register(BalanceRecord)
 class BalanceRecordAdmin(admin.ModelAdmin):
-    list_display = ["account", "amount", "date", "note", "created_at"]
-    list_filter = ["date", "account"]
-    search_fields = ["account__name", "note"]
-    ordering = ["-date", "-created_at"]
+    list_display = ("id", "account", "amount", "date", "note", "created_at")
+    list_filter = ("date", "created_at")
+    raw_id_fields = ("account",)
+    date_hierarchy = "created_at"
