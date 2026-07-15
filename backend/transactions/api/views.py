@@ -1,3 +1,4 @@
+from django.db.transaction import atomic
 from django_filters import rest_framework as filters
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -25,6 +26,7 @@ class TransactionViewSet(ModelViewSet):
         user = self.request.user
         return Transaction.objects.filter(account__user=user).select_related("account")
 
+    @atomic
     def destroy(self, request, *args, **kwargs):
         destroy_transaction(self.get_object())
         return Response(status=status.HTTP_204_NO_CONTENT)
