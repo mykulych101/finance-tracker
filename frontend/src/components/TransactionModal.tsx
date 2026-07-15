@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  AccountSlimRead,
   ReadTransactionRead,
   WriteTransactionWrite,
   useAccountsAutocompleteListQuery,
   useTransactionsCreateMutation,
   useTransactionsPartialUpdateMutation,
 } from '@/redux/api';
-import { allPages } from '@/constants/constants';
+import { allPages, CURRENCY_SYMBOLS } from '@/constants/constants';
 import { toast } from 'sonner';
 
 interface TransactionModalProps {
@@ -20,8 +19,7 @@ interface TransactionModalProps {
 }
 
 export const TransactionModal = ({ isOpen, transaction, onClose }: TransactionModalProps) => {
-  const { data: accountsData } = useAccountsAutocompleteListQuery({ pageSize: allPages });
-  const accounts: AccountSlimRead[] = useMemo(() => accountsData?.results || [], [accountsData]);
+  const { data: accounts } = useAccountsAutocompleteListQuery({ pageSize: allPages });
 
   const [createTransaction, { isLoading: isCreating }] = useTransactionsCreateMutation();
   const [updateTransaction, { isLoading: isUpdating }] = useTransactionsPartialUpdateMutation();
@@ -89,8 +87,8 @@ export const TransactionModal = ({ isOpen, transaction, onClose }: TransactionMo
               className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select account</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
+              {accounts?.results.map(a => (
+                <option key={a.id} value={a.id}>{CURRENCY_SYMBOLS[a.currency]} {a.name}</option>
               ))}
             </select>
           </div>

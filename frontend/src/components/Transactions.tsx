@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { TransactionModal } from '@/components/TransactionModal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Pagination } from '@/components/ui/Pagination';
 import { SortIcon } from '@/components/ui/SortIcon';
-import { allPages, SEARCH_DEBOUNCE_MS } from '@/constants/constants';
+import { allPages, CURRENCY_SYMBOLS, SEARCH_DEBOUNCE_MS } from '@/constants/constants';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
   ReadTransactionRead,
@@ -51,12 +51,10 @@ export const Transactions = () => {
   }, [formValues.type, formValues.account, formValues.dateAfter, formValues.dateBefore,
     debouncedDescription, debouncedRawCategory, setValue]);
 
-  const { data, isLoading } = useTransactionsListQuery(queryArg);
-  const { data: accountsData } = useAccountsAutocompleteListQuery({ pageSize: allPages });
+  const { data: transactions, isLoading } = useTransactionsListQuery(queryArg);
+  const { data: accounts } = useAccountsAutocompleteListQuery({ pageSize: allPages });
   const [destroyTransaction] = useTransactionsDestroyMutation();
 
-  const transactions = useMemo(() => data?.results || [], [data]);
-  const accounts = useMemo(() => accountsData?.results || [], [accountsData]);
 
   const handleSort = (field: TransactionSortField) => {
     setSort(prev => {
@@ -99,8 +97,8 @@ export const Transactions = () => {
               className={inputClass}
             >
               <option value="">All accounts</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
+              {accounts?.results.map(a => (
+                <option key={a.id} value={a.id}>{CURRENCY_SYMBOLS[a.currency]} {a.name}</option>
               ))}
             </select>
             <select
@@ -130,7 +128,7 @@ export const Transactions = () => {
                 <div key={i} className="h-10 bg-gray-200 dark:bg-neutral-700 rounded" />
               ))}
             </div>
-          ) : transactions.length === 0 ? (
+          ) : transactions?.results.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-neutral-400 text-lg mb-2">No transactions found</div>
               <p className="text-gray-400 dark:text-neutral-500 text-sm">Add a transaction or adjust your filters.</p>
@@ -151,7 +149,7 @@ export const Transactions = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                    {transactions.map(t => (
+                    {transactions?.results.map(t => (
                       <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-neutral-700/50 transition-colors">
                         <td className="py-3 pr-4 text-gray-700 dark:text-neutral-300">{t.date}</td>
                         <td className="py-3 pr-4 text-gray-700 dark:text-neutral-300">{t.account.name}</td>
@@ -196,7 +194,7 @@ export const Transactions = () => {
               <Pagination
                 page={queryArg.page ?? 1}
                 pageSize={queryArg.pageSize ?? DEFAULT_PAGE_SIZE}
-                count={data?.count ?? 0}
+                count={transactions?.count ?? 0}
                 onPageChange={page => setValue('page', page)}
                 onPageSizeChange={size => { setValue('pageSize', size); setValue('page', 1); }}
               />

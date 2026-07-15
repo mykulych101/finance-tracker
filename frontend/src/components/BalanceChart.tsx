@@ -12,9 +12,8 @@ import {
   TimeScale,
   TooltipItem,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
-import { Balance, Account } from '@/types/finance';
+import { Line } from 'react-chartjs-2';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -30,12 +29,12 @@ ChartJS.register(
 );
 
 interface BalanceChartProps {
-  account: Account;
-  balances: Balance[];
+  account: { name: string; type: string };
+  history: { date: string; amount: number }[];
   height?: number;
 }
 
-export const BalanceChart = ({ account, balances, height = 400 }: BalanceChartProps) => {
+export const BalanceChart = ({ account, history, height = 400 }: BalanceChartProps) => {
   const { formatCurrency, selectedCurrency } = useCurrency();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -43,12 +42,7 @@ export const BalanceChart = ({ account, balances, height = 400 }: BalanceChartPr
   const textColor = isDark ? '#e5e5e5' : '#374151';
   const gridColor = isDark ? 'rgba(163, 163, 163, 0.3)' : 'rgba(0, 0, 0, 0.1)';
 
-  // Sort balances by date
-  const sortedBalances = balances
-    .filter(balance => balance.accountId === account.id)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  if (sortedBalances.length === 0) {
+  if (history.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 dark:bg-neutral-700/50 rounded-lg">
         <p className="text-gray-500 dark:text-neutral-400">No historical data available for this account</p>
@@ -57,11 +51,11 @@ export const BalanceChart = ({ account, balances, height = 400 }: BalanceChartPr
   }
 
   const data = {
-    labels: sortedBalances.map(balance => balance.date),
+    labels: history.map(item => item.date),
     datasets: [
       {
         label: account.name,
-        data: sortedBalances.map(balance => balance.amount),
+        data: history.map(item => item.amount),
         borderColor: account.type === 'asset' ? 'rgb(34, 197, 94)' :
           account.type === 'liability' ? 'rgb(239, 68, 68)' :
             'rgb(59, 130, 246)',

@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useAppSelector } from '@/redux/hooks';
-import { CurrencySelector, CURRENCY_SYMBOLS } from './CurrencySelector';
+import { CurrencySelector } from './CurrencySelector';
 import WelcomeScreen from './WelcomeScreen';
 import { ManageAccountModal } from './ManageAccountModal';
 import { ConfirmationModal } from './ui/ConfirmationModal';
 import { AccountRead, useAccountsDestroyMutation, useAccountsListQuery, useAnalyticsNetWorthRetrieveQuery, } from '@/redux/api';
-import { allPages } from '@/constants/constants';
+import { allPages, CURRENCY_SYMBOLS } from '@/constants/constants';
 import { toast } from 'sonner';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import type { CurrencyEnum } from '@/redux/api';
@@ -137,7 +137,8 @@ export const BalanceSheet = () => {
     );
   }
 
-  if (accounts?.results.length === 0) {
+  if (!accounts?.results.length) {
+    console.log("welcome screen")
     return <WelcomeScreen />;
   }
 

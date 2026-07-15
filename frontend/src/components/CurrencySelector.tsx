@@ -5,18 +5,13 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setConvertTo } from '@/redux/currencySlice';
 import type { CurrencyEnum } from '@/redux/api';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { CURRENCY_SYMBOLS } from '@/constants/constants';
 
 interface CurrencySelectorProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }
-
-export const CURRENCY_SYMBOLS: Record<CurrencyEnum, string> = {
-  USD: '$',
-  EUR: '€',
-  UAH: '₴',
-};
 
 const CURRENCY_OPTIONS: CurrencyEnum[] = ['USD', 'EUR', 'UAH'];
 
