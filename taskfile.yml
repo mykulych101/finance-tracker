@@ -1,6 +1,6 @@
 # https://taskfile.dev
 
-version: '3'
+version: "3"
 
 vars:
   GREETING: Hello, World!
@@ -75,6 +75,7 @@ tasks:
     desc: "Format code with ruff"
     dir: backend
     cmds:
+      - poetry run ruff format
       - poetry run ruff check . --fix
       - poetry run ruff format
   dev.lint.fe:
@@ -83,3 +84,9 @@ tasks:
     cmds:
       - yarn run format
       - yarn run build
+  dev.generate_admin:
+    desc: "Generate admin.py files for specific apps"
+    dir: backend
+    cmds:
+      - poetry run python manage.py admin_generator {{.CLI_ARGS}} > {{.CLI_ARGS}}/admin.py
+      - poetry run ruff check {{.CLI_ARGS}}/admin.py --fix --unsafe-fixes

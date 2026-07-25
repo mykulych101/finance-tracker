@@ -28,7 +28,7 @@ export const ManageAccountModal = ({ account, onClose }: ManageAccountModalProps
 
   const onSubmit = (values: Account) => {
 
-    updateAccount({ id: account.id, patchedAccount: values }).unwrap().then(() => {
+    updateAccount({ id: account.id, patchedWriteAccount: values }).unwrap().then(() => {
       toast.success('Account updated successfully!');
       onClose();
     }).catch(error => toast.error(JSON.stringify(error)))

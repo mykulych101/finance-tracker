@@ -1,6 +1,10 @@
+import hashlib
+
 import tablib
+from django.db import IntegrityError
 from django.db.transaction import atomic
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from import_export.results import RowResult
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -9,19 +13,57 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from accounts.api.serializers import AccountSerializer, AccountSlimSerializer
+from accounts.api.serializers import AccountSerializer, AccountSlimSerializer, WriteAccountSerializer
+from accounts.constants import AccountCurrency
 from accounts.models import Account
+from core.api.exceptions import ExchangeRateUnavailable
+from integrations.monobank.service import get_exchange_rates
 from transactions.api.resources import TransactionResource
+from transactions.models import TransactionImport
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="convert_to",
+                location=OpenApiParameter.QUERY,
+                required=False,
+                enum=AccountCurrency.values,
+                description="Convert all balances to. this currency.",
+            )
+        ]
+    )
+)
 class AccountViewSet(ModelViewSet):
-    serializer_class = AccountSerializer
     autocomplete_serializer_class = AccountSlimSerializer
     permission_classes = [IsAuthenticated]
     queryset = Account.objects.all()
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        convert_to = self.request.query_params.get("convert_to")
+        if convert_to and convert_to in AccountCurrency.values:
+            ctx["convert_to"] = convert_to
+            ctx["rates"] = get_exchange_rates()
+        return ctx
+
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            return WriteAccountSerializer
+        if self.action == "autocomplete":
+            return self.autocomplete_serializer_class
+        return AccountSerializer
+
+    def list(self, request, *args, **kwargs):
+        # Balances are converted lazily during serialization; a missing rate raises here.
+        try:
+            return super().list(request, *args, **kwargs)
+        except ValueError as exc:
+            raise ExchangeRateUnavailable from exc
+
     def get_queryset(self):
-        return Account.objects.filter(user=self.request.user, is_active=True)
+        return Account.objects.with_latest_balance().filter(user=self.request.user, is_active=True)
 
     def perform_destroy(self, instance):
         instance.is_active = False
@@ -42,16 +84,23 @@ class AccountViewSet(ModelViewSet):
     @action(detail=True, methods=["POST"], parser_classes=[MultiPartParser])
     def import_transaction(self, request, *args, **kwargs):
         account = self.get_object()
+        Account.objects.select_for_update().get(pk=account.pk)
         file = request.FILES.get("file")
         if not file:
             raise ValidationError({"error": "No file provided"})
+        file_bytes = file.read()
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
         try:
-            book = tablib.Dataset().load(file.read().decode("utf-8"), format="csv")
+            book = tablib.Dataset().load(file_bytes.decode("utf-8"), format="csv")
         except (tablib.UnsupportedFormat, tablib.InvalidDimensions, ValueError, IndexError) as e:
             raise ValidationError({"error": f"Invalid file format: {e}"})
+        try:
+            TransactionImport.objects.create(account=account, file_hash=file_hash)
+        except IntegrityError:
+            raise ValidationError({"error": "This file has already been imported for this account"})
 
         resource = TransactionResource(account=account)
         result = resource.import_data(book, dry_run=False)
         if result.has_errors() or result.has_validation_errors():
             raise ValidationError({"error": "CSV contains invalid rows"})
-        return Response({"imported": result.total_rows}, status=status.HTTP_200_OK)
+        return Response({"imported": result.totals[RowResult.IMPORT_TYPE_NEW]}, status=status.HTTP_200_OK)

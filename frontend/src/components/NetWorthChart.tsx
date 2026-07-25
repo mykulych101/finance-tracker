@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,11 +13,11 @@ import {
   Filler,
   TooltipItem,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
-import { Balance, Account } from '@/types/finance';
+import { Line } from 'react-chartjs-2';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useTheme } from '@/context/ThemeContext';
+import { AnalyticsNetWorthHistoryItem } from '@/redux/api';
 
 ChartJS.register(
   CategoryScale,
@@ -33,19 +32,11 @@ ChartJS.register(
 );
 
 interface NetWorthChartProps {
-  accounts: Account[];
-  balances: Balance[];
+  history: AnalyticsNetWorthHistoryItem[];
   height?: number;
 }
 
-interface NetWorthDataPoint {
-  date: Date;
-  assets: number;
-  liabilities: number;
-  netWorth: number;
-}
-
-export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChartProps) => {
+export const NetWorthChart = ({ history, height = 400 }: NetWorthChartProps) => {
   const { formatCurrency, selectedCurrency } = useCurrency();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -53,47 +44,7 @@ export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChar
   const textColor = isDark ? '#e5e5e5' : '#374151';
   const gridColor = isDark ? 'rgba(163, 163, 163, 0.3)' : 'rgba(0, 0, 0, 0.1)';
 
-  const netWorthData = useMemo(() => {
-    // Get all unique dates from balances
-    const allDates = [...new Set(balances.map(b => b.date.toISOString().split('T')[0]))]
-      .sort()
-      .map(dateStr => new Date(dateStr));
-
-    const dataPoints: NetWorthDataPoint[] = [];
-
-    for (const date of allDates) {
-      let totalAssets = 0;
-      let totalLiabilities = 0;
-
-      // For each account, get the most recent balance up to this date
-      for (const account of accounts) {
-        const accountBalances = balances
-          .filter(b => b.accountId === account.id && b.date <= date)
-          .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-        if (accountBalances.length > 0) {
-          const mostRecentBalance = accountBalances[0].amount;
-
-          if (account.type === 'asset') {
-            totalAssets += mostRecentBalance;
-          } else if (account.type === 'liability') {
-            totalLiabilities += Math.abs(mostRecentBalance); // Convert to positive for display
-          }
-        }
-      }
-
-      dataPoints.push({
-        date,
-        assets: totalAssets,
-        liabilities: totalLiabilities,
-        netWorth: totalAssets - totalLiabilities,
-      });
-    }
-
-    return dataPoints;
-  }, [accounts, balances]);
-
-  if (netWorthData.length === 0) {
+  if (history.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 bg-gray-50 dark:bg-neutral-700/50 rounded-lg">
         <p className="text-gray-500 dark:text-neutral-400">No data available for net worth tracking</p>
@@ -102,11 +53,11 @@ export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChar
   }
 
   const data = {
-    labels: netWorthData.map(point => point.date),
+    labels: history.map(item => item.date),
     datasets: [
       {
         label: 'Assets',
-        data: netWorthData.map(point => point.assets),
+        data: history.map(item => item.assets),
         borderColor: 'rgb(34, 197, 94)',
         backgroundColor: 'rgba(34, 197, 94, 0.1)',
         borderWidth: 2,
@@ -115,7 +66,7 @@ export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChar
       },
       {
         label: 'Liabilities',
-        data: netWorthData.map(point => point.liabilities),
+        data: history.map(item => item.liabilities),
         borderColor: 'rgb(239, 68, 68)',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         borderWidth: 2,
@@ -124,7 +75,7 @@ export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChar
       },
       {
         label: 'Net Worth',
-        data: netWorthData.map(point => point.netWorth),
+        data: history.map(item => item.net_worth),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         borderWidth: 3,
@@ -196,11 +147,11 @@ export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChar
   };
 
   // Calculate summary stats
-  const latestData = netWorthData[netWorthData.length - 1];
-  const firstData = netWorthData[0];
-  const netWorthChange = latestData.netWorth - firstData.netWorth;
-  const netWorthChangePercent = firstData.netWorth !== 0
-    ? ((latestData.netWorth - firstData.netWorth) / Math.abs(firstData.netWorth)) * 100
+  const latestData = history[history.length - 1];
+  const firstData = history[0];
+  const netWorthChange = latestData.net_worth - firstData.net_worth;
+  const netWorthChangePercent = firstData.net_worth !== 0
+    ? ((latestData.net_worth - firstData.net_worth) / Math.abs(firstData.net_worth)) * 100
     : 0;
 
   return (
@@ -209,9 +160,9 @@ export const NetWorthChart = ({ accounts, balances, height = 400 }: NetWorthChar
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
           <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Current Net Worth</h3>
-          <div className={`text-2xl font-bold ${latestData.netWorth >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'
+          <div className={`text-2xl font-bold ${latestData.net_worth >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'
             }`}>
-            {formatCurrency(latestData.netWorth)}
+            {formatCurrency(latestData.net_worth)}
           </div>
         </div>
 

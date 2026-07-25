@@ -366,6 +366,42 @@
         "decorators": ""
     },
     {
+        "url": "/superadmin/integrations/exchangerate/",
+        "module": "django.contrib.admin.options.changelist_view",
+        "name": "admin:integrations_exchangerate_changelist",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/integrations/exchangerate/add/",
+        "module": "django.contrib.admin.options.add_view",
+        "name": "admin:integrations_exchangerate_add",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/integrations/exchangerate/<path:object_id>/history/",
+        "module": "django.contrib.admin.options.history_view",
+        "name": "admin:integrations_exchangerate_history",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/integrations/exchangerate/<path:object_id>/delete/",
+        "module": "django.contrib.admin.options.delete_view",
+        "name": "admin:integrations_exchangerate_delete",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/integrations/exchangerate/<path:object_id>/change/",
+        "module": "django.contrib.admin.options.change_view",
+        "name": "admin:integrations_exchangerate_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/integrations/exchangerate/<path:object_id>/",
+        "module": "django.views.generic.base.RedirectView",
+        "name": "",
+        "decorators": ""
+    },
+    {
         "url": "/superadmin/<app_label>/",
         "module": "django.contrib.admin.sites.app_index",
         "name": "admin:app_list",
@@ -585,6 +621,42 @@
         "url": "/api/transactions/<pk>\\.<format>/",
         "module": "transactions.api.views.TransactionViewSet",
         "name": "transactions-detail",
+        "decorators": ""
+    },
+    {
+        "url": "/api/",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/api/<drf_format_suffix:format>",
+        "module": "rest_framework.routers.APIRootView",
+        "name": "api-root",
+        "decorators": ""
+    },
+    {
+        "url": "/api/analytics/net_worth/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth",
+        "decorators": ""
+    },
+    {
+        "url": "/api/analytics/net_worth\\.<format>/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth",
+        "decorators": ""
+    },
+    {
+        "url": "/api/analytics/net-worth-history/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth-history",
+        "decorators": ""
+    },
+    {
+        "url": "/api/analytics/net-worth-history\\.<format>/",
+        "module": "analytics.api.views.AnalyticsViewSet",
+        "name": "analytics-net-worth-history",
         "decorators": ""
     },
     {

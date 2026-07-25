@@ -18,6 +18,9 @@
         "tabler",
         "dateutil",
         "dayfirst",
-        "filterset"
+        "filterset",
+        "viewsets",
+        "genbadge",
+        "MONOBANK"
     ]
 }

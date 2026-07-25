@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+from celery.schedules import crontab
 from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,6 +28,7 @@ FRONTEND_URL = config("FRONTEND_URL", default="")
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default=SITE_URL, cast=Csv())
 
 SENTRY_DSN = config("SENTRY_DSN", default="")
+MONOBANK_API_URL = config("MONOBANK_API_URL", default="https://api.monobank.ua/")
 
 
 # Application definition
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     "accounts",
     "balances",
     "transactions",
+    "integrations",
     "import_export",
     "django_filters",
 ]
@@ -156,7 +159,13 @@ KEY_PREFIX = config("KEY_PREFIX", default=PROJECT_NAME)
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_BEAT_SCHEDULER = "redbeat.RedBeatScheduler"
-CELERY_BEAT_SCHEDULE = {}
+
+CELERY_BEAT_SCHEDULE = {
+    "refresh-exchange-rates": {
+        "task": "integrations.tasks.refresh_exchange_rates",
+        "schedule": crontab(hour="0,12", minute=0),  # every 12 hours
+    },
+}
 
 
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@FINANCETRACKER.com")

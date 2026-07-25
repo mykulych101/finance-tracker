@@ -1,3 +1,4 @@
+import hashlib
 from decimal import Decimal, InvalidOperation
 
 from dateutil.parser import parse as parse_datetime
@@ -49,15 +50,41 @@ class TransactionResource(resources.ModelResource):
         column_name="Category",
         widget=widgets.CharWidget(),
     )
+    import_fingerprint = fields.Field(
+        attribute="import_fingerprint",
+        column_name="import_fingerprint",
+        widget=widgets.CharWidget(),
+    )
 
     class Meta:
         model = Transaction
         import_id_fields = ()
-        fields = ("date", "amount", "type", "description", "raw_category")
+        fields = ("date", "amount", "type", "description", "raw_category", "import_fingerprint")
 
     def __init__(self, account, **kwargs):
         super().__init__(**kwargs)
         self._account = account
+
+    @staticmethod
+    def _compute_fingerprint(row: dict) -> str:
+        parts = "|".join(
+            [
+                str(row.get("Date and time", "")),
+                str(row.get("Amount", "")),
+                str(row.get("Category", "")),
+                str(row.get("Description", "")),
+                str(row.get("type", "")),
+            ]
+        )
+        return hashlib.sha256(parts.encode()).hexdigest()
+
+    def before_import(self, dataset, **kwargs):
+        super().before_import(dataset, **kwargs)
+        self._existing_fingerprints = set(
+            Transaction.objects.filter(account=self._account)
+            .exclude(import_fingerprint="")
+            .values_list("import_fingerprint", flat=True)
+        )
 
     def before_import_row(self, row, **kwargs):
         raw_str = str(row.get("Amount") or "").strip()
@@ -67,6 +94,12 @@ class TransactionResource(resources.ModelResource):
             return  # widget will raise the proper ValidationError
         row["type"] = TransactionType.INCOME if raw_amount >= 0 else TransactionType.EXPENSE
         row["Amount"] = str(abs(raw_amount))
+        row["import_fingerprint"] = self._compute_fingerprint(row)
+
+    def skip_row(self, instance, original, row, import_validation_errors=None):
+        if row["import_fingerprint"] in self._existing_fingerprints:
+            return True
+        return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
 
     def do_instance_save(self, instance, is_create):
         create_transaction(
@@ -77,5 +110,7 @@ class TransactionResource(resources.ModelResource):
                 "date": instance.date,
                 "description": instance.description or "",
                 "raw_category": instance.raw_category or "",
+                "import_fingerprint": instance.import_fingerprint,
             }
         )
+        self._existing_fingerprints.add(instance.import_fingerprint)

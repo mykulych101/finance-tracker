@@ -1,8 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { TransactionModal } from '@/components/TransactionModal';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { Pagination } from '@/components/ui/Pagination';
+import { SortIcon } from '@/components/ui/SortIcon';
+import { allPages, CURRENCY_SYMBOLS, SEARCH_DEBOUNCE_MS } from '@/constants/constants';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
   ReadTransactionRead,
   TransactionsListApiArg,
@@ -10,12 +17,7 @@ import {
   useTransactionsDestroyMutation,
   useTransactionsListQuery,
 } from '@/redux/api';
-import { allPages, SEARCH_DEBOUNCE_MS } from '@/constants/constants';
-import { useDebounce } from '@/hooks/useDebounce';
-import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
-import { Pagination } from '@/components/ui/Pagination';
-import { TransactionModal } from '@/components/TransactionModal';
-import { toast } from 'sonner';
+import { TransactionSort, TransactionSortField } from '@/types/transactions';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -27,10 +29,17 @@ export const Transactions = () => {
   const debouncedDescription = useDebounce(formValues.description, SEARCH_DEBOUNCE_MS);
   const debouncedRawCategory = useDebounce(formValues.rawCategory, SEARCH_DEBOUNCE_MS);
 
+  const [sort, setSort] = useState<TransactionSort | null>(null);
+
+  const ordering = sort
+    ? ([sort.dir === 'desc' ? `-${sort.field}` : sort.field] as TransactionsListApiArg['ordering'])
+    : undefined;
+
   const queryArg: TransactionsListApiArg = {
     ...formValues,
     description: debouncedDescription || undefined,
     rawCategory: debouncedRawCategory || undefined,
+    ordering,
   };
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -40,14 +49,21 @@ export const Transactions = () => {
   useEffect(() => {
     setValue('page', 1);
   }, [formValues.type, formValues.account, formValues.dateAfter, formValues.dateBefore,
-      debouncedDescription, debouncedRawCategory, setValue]);
+    debouncedDescription, debouncedRawCategory, setValue]);
 
-  const { data, isLoading } = useTransactionsListQuery(queryArg);
-  const { data: accountsData } = useAccountsAutocompleteListQuery({ pageSize: allPages });
+  const { data: transactions, isLoading } = useTransactionsListQuery(queryArg);
+  const { data: accounts } = useAccountsAutocompleteListQuery({ pageSize: allPages });
   const [destroyTransaction] = useTransactionsDestroyMutation();
 
-  const transactions = useMemo(() => data?.results || [], [data]);
-  const accounts = useMemo(() => accountsData?.results || [], [accountsData]);
+
+  const handleSort = (field: TransactionSortField) => {
+    setSort(prev => {
+      if (prev?.field !== field) return { field, dir: 'asc' };
+      if (prev.dir === 'asc') return { field, dir: 'desc' };
+      return null;
+    });
+    setValue('page', 1);
+  };
 
   const onDelete = (id: number) => {
     destroyTransaction({ id })
@@ -76,6 +92,16 @@ export const Transactions = () => {
           {/* Filter bar — row 1: categorical + date filters */}
           <div className="flex flex-wrap gap-3 mb-3">
             <select
+              value={queryArg.account?.[0] ?? ''}
+              onChange={e => setValue('account', e.target.value ? [Number(e.target.value)] : undefined)}
+              className={inputClass}
+            >
+              <option value="">All accounts</option>
+              {accounts?.results.map(a => (
+                <option key={a.id} value={a.id}>{CURRENCY_SYMBOLS[a.currency]} {a.name}</option>
+              ))}
+            </select>
+            <select
               value={queryArg.type ?? ''}
               onChange={e => setValue('type', (e.target.value || undefined) as 'income' | 'expense' | undefined)}
               className={inputClass}
@@ -85,25 +111,14 @@ export const Transactions = () => {
               <option value="expense">Expense</option>
             </select>
 
-            <select
-              value={queryArg.account?.[0] ?? ''}
-              onChange={e => setValue('account', e.target.value ? [Number(e.target.value)] : undefined)}
-              className={inputClass}
-            >
-              <option value="">All accounts</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
-
-            <input type="date" {...register('dateAfter')}  className={inputClass} />
+            <input type="date" {...register('dateAfter')} className={inputClass} />
             <input type="date" {...register('dateBefore')} className={inputClass} />
           </div>
 
           {/* Filter bar — row 2: text search filters */}
           <div className="flex gap-3 mb-6">
             <input type="text" {...register('description')} placeholder="Description" className={`${inputClass} flex-1`} />
-            <input type="text" {...register('rawCategory')} placeholder="Category"    className={`${inputClass} flex-1`} />
+            <input type="text" {...register('rawCategory')} placeholder="Category" className={`${inputClass} flex-1`} />
           </div>
 
           {/* Content */}
@@ -113,7 +128,7 @@ export const Transactions = () => {
                 <div key={i} className="h-10 bg-gray-200 dark:bg-neutral-700 rounded" />
               ))}
             </div>
-          ) : transactions.length === 0 ? (
+          ) : transactions?.results.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-500 dark:text-neutral-400 text-lg mb-2">No transactions found</div>
               <p className="text-gray-400 dark:text-neutral-500 text-sm">Add a transaction or adjust your filters.</p>
@@ -124,34 +139,32 @@ export const Transactions = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-neutral-700 text-left text-gray-500 dark:text-neutral-400">
-                      <th className="pb-2 pr-4 font-medium">Date</th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('date')}>Date<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="date" /></th>
                       <th className="pb-2 pr-4 font-medium">Account</th>
-                      <th className="pb-2 pr-4 font-medium">Type</th>
-                      <th className="pb-2 pr-4 font-medium">Amount</th>
-                      <th className="pb-2 pr-4 font-medium">Description</th>
-                      <th className="pb-2 pr-4 font-medium">Category</th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('type')}>Type<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="type" /></th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('amount')}>Amount<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="amount" /></th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('description')}>Description<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="description" /></th>
+                      <th className="pb-2 pr-4 font-medium cursor-pointer select-none hover:text-gray-700 dark:hover:text-neutral-200" onClick={() => handleSort('raw_category')}>Category<SortIcon activeField={sort?.field ?? null} direction={sort?.dir ?? 'asc'} field="raw_category" /></th>
                       <th className="pb-2 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
-                    {transactions.map(t => (
+                    {transactions?.results.map(t => (
                       <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-neutral-700/50 transition-colors">
                         <td className="py-3 pr-4 text-gray-700 dark:text-neutral-300">{t.date}</td>
                         <td className="py-3 pr-4 text-gray-700 dark:text-neutral-300">{t.account.name}</td>
                         <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            t.type === 'income'
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${t.type === 'income'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            }`}>
                             {t.type}
                           </span>
                         </td>
-                        <td className={`py-3 pr-4 font-medium ${
-                          t.type === 'income'
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
+                        <td className={`py-3 pr-4 font-medium ${t.type === 'income'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                          }`}>
                           {t.type === 'expense' ? '−' : '+'}{t.amount}
                         </td>
                         <td className="py-3 pr-4 text-gray-500 dark:text-neutral-400">{t.description ?? '—'}</td>
@@ -181,7 +194,7 @@ export const Transactions = () => {
               <Pagination
                 page={queryArg.page ?? 1}
                 pageSize={queryArg.pageSize ?? DEFAULT_PAGE_SIZE}
-                count={data?.count ?? 0}
+                count={transactions?.count ?? 0}
                 onPageChange={page => setValue('page', page)}
                 onPageSizeChange={size => { setValue('pageSize', size); setValue('page', 1); }}
               />

@@ -22,10 +22,28 @@ class AccountCategory(models.TextChoices):
     OTHER = "other", "Other"
 
 
-# UAN/USD/EUR
+# UAH/USD/EUR
 class AccountCurrency(models.TextChoices):
     """Defines the currencies that can be used for accounts in the system."""
 
     USD = "USD", "USD"
     EUR = "EUR", "EUR"
-    UAN = "UAN", "UAN"
+    UAH = "UAH", "UAH"
+
+
+VALID_CATEGORIES_BY_TYPE = {
+    AccountType.ASSET: [
+        AccountCategory.CASH,
+        AccountCategory.INVESTMENTS,
+        AccountCategory.REAL_ESTATE,
+        AccountCategory.CRYPTO,
+        AccountCategory.OTHER,
+    ],
+    AccountType.LIABILITY: [
+        AccountCategory.CREDIT_CARD,
+        AccountCategory.LOAN,
+        AccountCategory.MORTGAGE,
+        AccountCategory.OTHER,
+    ],
+    AccountType.EQUITY: [AccountCategory.OTHER],
+}

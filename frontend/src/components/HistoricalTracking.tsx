@@ -1,86 +1,182 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useFinance } from '@/context/FinanceContext';
-import { BalanceChart } from './BalanceChart';
-import { NetWorthChart } from './NetWorthChart';
+import { useState, useEffect } from 'react';
+import { format, subDays } from 'date-fns';
+import { allPages } from '@/constants/constants';
 import { useCurrency } from '@/context/CurrencyContext';
+import {
+  AccountRead,
+  CurrencyEnum,
+  useAccountsListQuery,
+  useAnalyticsNetWorthHistoryListQuery,
+  useAnalyticsNetWorthRetrieveQuery,
+} from '@/redux/api';
+import { useAppSelector } from '@/redux/hooks';
+import { BalanceChart } from './BalanceChart';
 import { CurrencySelector } from './CurrencySelector';
+import { NetWorthChart } from './NetWorthChart';
+
+type DateRange = '7d' | '30d' | '90d' | '1y' | 'all';
+type Period = 'daily' | 'monthly' | 'weekly';
+
+const getDateParams = (range: DateRange): { dateAfter: string; dateBefore: string } => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const days: Partial<Record<DateRange, number>> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
+  const dateAfter = range !== 'all'
+    ? format(subDays(new Date(), days[range]!), 'yyyy-MM-dd')
+    : '2000-01-01';
+  return { dateAfter, dateBefore: today };
+};
+
+const getPeriod = (range: DateRange): Period => {
+  if (range === '7d' || range === '30d') return 'daily';
+  if (range === '90d') return 'weekly';
+  return 'monthly';
+};
+
+const getBalanceField = (type: string): 'assets' | 'liabilities' =>
+  type === 'asset' ? 'assets' : 'liabilities';
+
+interface AccountQueryProps {
+  account: AccountRead;
+  dateAfter: string;
+  dateBefore: string;
+  period: Period;
+  convertTo?: CurrencyEnum;
+}
+
+const AccountSummaryCard = ({ account, dateAfter, dateBefore, period, convertTo }: AccountQueryProps) => {
+  const { formatCurrency } = useCurrency();
+  const { data: history = [] } = useAnalyticsNetWorthHistoryListQuery({
+    account: account.id,
+    dateAfter,
+    dateBefore,
+    period,
+    convertTo,
+  });
+  const field = getBalanceField(account.type);
+  const latest = history.length > 0 ? history[history.length - 1][field] : 0;
+  const first = history.length > 0 ? history[0][field] : 0;
+  const change = latest - first;
+  const changePct = first !== 0 ? (change / Math.abs(first)) * 100 : 0;
+
+  return (
+    <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4 border dark:border-neutral-600">
+      <h3 className="font-semibold text-gray-800 dark:text-neutral-200 mb-2">{account.name}</h3>
+      <div className="text-lg font-bold mb-1 text-gray-900 dark:text-neutral-100">
+        {formatCurrency(latest)}
+      </div>
+      <div className={`text-sm flex items-center space-x-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+        <span>{change >= 0 ? '↗' : '↘'}</span>
+        <span>
+          {formatCurrency(Math.abs(change))}
+          ({Math.abs(changePct).toFixed(1)}%)
+        </span>
+      </div>
+      <div className="text-xs text-gray-500 dark:text-neutral-400 mt-1">
+        {history.length} data points
+      </div>
+    </div>
+  );
+};
+
+const AccountChartSection = ({ account, dateAfter, dateBefore, period, convertTo }: AccountQueryProps) => {
+  const { data: items = [] } = useAnalyticsNetWorthHistoryListQuery({
+    account: account.id,
+    dateAfter,
+    dateBefore,
+    period,
+    convertTo,
+  });
+  const field = getBalanceField(account.type);
+  const history = items.map(item => ({ date: item.date, amount: item[field] }));
+
+  return (
+    <div className="border dark:border-neutral-600 rounded-lg p-4">
+      <BalanceChart account={account} history={history} height={300} />
+    </div>
+  );
+};
+
+const IndividualAccountView = ({ account, dateAfter, dateBefore, period, convertTo }: AccountQueryProps) => {
+  const { formatCurrency } = useCurrency();
+  const { data: history = [] } = useAnalyticsNetWorthHistoryListQuery({
+    account: account.id,
+    dateAfter,
+    dateBefore,
+    period,
+    convertTo,
+  });
+  const field = getBalanceField(account.type);
+  const balanceHistory = history.map(item => ({ date: item.date, amount: item[field] }));
+  const latest = history.length > 0 ? history[history.length - 1][field] : 0;
+  const change = history.length >= 2 ? history[history.length - 1][field] - history[0][field] : 0;
+
+  return (
+    <div>
+      <BalanceChart account={account} history={balanceHistory} height={500} />
+
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Current Balance</h3>
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {formatCurrency(latest)}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-800 dark:text-neutral-200 mb-2">Change</h3>
+          <div className={`text-2xl font-bold ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            {formatCurrency(change)}
+          </div>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-800 dark:text-neutral-200 mb-2">Data Points</h3>
+          <div className="text-2xl font-bold text-gray-600 dark:text-neutral-300">
+            {history.length}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const HistoricalTracking = () => {
-  const { accounts, balances, isLoading } = useFinance();
-  const { formatCurrency } = useCurrency();
+  const convertTo = useAppSelector(state => state.currency.convertTo);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
+  const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [isClient, setIsClient] = useState(false);
 
-  // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const getDateRangeFilter = (range: string) => {
-    const now = new Date();
-    switch (range) {
-      case '7d':
-        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      case '30d':
-        return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      case '90d':
-        return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      case '1y':
-        return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-      default:
-        return new Date(0); // Beginning of time
-    }
-  };
+  const { dateAfter, dateBefore } = getDateParams(dateRange);
+  const period = getPeriod(dateRange);
 
-  const filteredBalances = useMemo(() => {
-    const dateFilter = getDateRangeFilter(dateRange);
-    return balances.filter(balance => new Date(balance.date).getTime() >= dateFilter.getTime());
-  }, [balances, dateRange]);
+  const { data: overallHistory = [], isLoading: isHistoryLoading } = useAnalyticsNetWorthHistoryListQuery({
+    dateAfter,
+    dateBefore,
+    period,
+    convertTo: convertTo ?? undefined,
+  });
 
-  const accountsWithHistory = useMemo(() => {
-    const toReturn = accounts.filter(account =>
-      filteredBalances.some(balance => balance.accountId === account.id)
-    );
-    return toReturn;
-  }, [accounts, filteredBalances]);
+  const { data: netWorthSnapshot, isLoading: isSnapshotLoading } = useAnalyticsNetWorthRetrieveQuery({
+    convertTo: convertTo ?? undefined,
+  });
 
-  const getAccountBalanceHistory = (accountId: string) => {
-    return filteredBalances
-      .filter(balance => balance.accountId === accountId)
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-  };
+  const { data: accountsData, isLoading: isAccountsLoading } = useAccountsListQuery({
+    pageSize: allPages,
+    convertTo: convertTo ?? undefined,
+  });
 
-  const getAccountLatestBalance = (accountId: string) => {
-    const accountBalances = getAccountBalanceHistory(accountId);
-    return accountBalances.length > 0 ? accountBalances[accountBalances.length - 1].amount : 0;
-  };
+  const isLoading = isHistoryLoading || isSnapshotLoading || isAccountsLoading;
 
-  const getAccountChangeFromFirst = (accountId: string) => {
-    const accountBalances = getAccountBalanceHistory(accountId);
-    if (accountBalances.length < 2) return 0;
+  const snapshotAccountIds = new Set((netWorthSnapshot?.accounts ?? []).map(a => a.id));
+  const accountsWithHistory = (accountsData?.results ?? []).filter(a => snapshotAccountIds.has(a.id));
+  const selectedAccountData = accountsData?.results.find(a => String(a.id) === selectedAccount);
 
-    const first = accountBalances[0].amount;
-    const latest = accountBalances[accountBalances.length - 1].amount;
-    return latest - first;
-  };
-
-  const getAccountChangePercentage = (accountId: string) => {
-    const accountBalances = getAccountBalanceHistory(accountId);
-    if (accountBalances.length < 2) return 0;
-
-    const first = accountBalances[0].amount;
-    const latest = accountBalances[accountBalances.length - 1].amount;
-
-    if (first === 0) return 0;
-    return ((latest - first) / Math.abs(first)) * 100;
-  };
-
-  const selectedAccountData = accounts.find(acc => acc.id === selectedAccount);
-
-  // Show loading state while hydrating or loading data
   if (!isClient || isLoading) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
@@ -157,7 +253,7 @@ export const HistoricalTracking = () => {
             <select
               id="date-range"
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | '1y' | 'all')}
+              onChange={(e) => setDateRange(e.target.value as DateRange)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
             >
               <option value="7d">Last 7 days</option>
@@ -174,91 +270,48 @@ export const HistoricalTracking = () => {
           <div className="space-y-8">
             {/* Net Worth Chart */}
             <div className="mb-8">
-              <NetWorthChart
-                accounts={accounts}
-                balances={filteredBalances}
-                height={400}
-              />
+              <NetWorthChart history={overallHistory} height={400} />
             </div>
 
             <h2 className="text-xl font-bold text-gray-800 dark:text-neutral-100 mb-4">Individual Account Summary</h2>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {accountsWithHistory.map((account) => {
-                const latestBalance = getAccountLatestBalance(account.id);
-                const change = getAccountChangeFromFirst(account.id);
-                const changePercent = getAccountChangePercentage(account.id);
-
-                return (
-                  <div key={account.id} className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4 border dark:border-neutral-600">
-                    <h3 className="font-semibold text-gray-800 dark:text-neutral-200 mb-2">{account.name}</h3>
-                    <div className="text-lg font-bold mb-1 text-gray-900 dark:text-neutral-100">
-                      {formatCurrency(latestBalance)}
-                    </div>
-                    <div className={`text-sm flex items-center space-x-2 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                      }`}>
-                      <span>{change >= 0 ? '↗' : '↘'}</span>
-                      <span>
-                        {formatCurrency(Math.abs(change))}
-                        ({Math.abs(changePercent).toFixed(1)}%)
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-neutral-400 mt-1">
-                      {getAccountBalanceHistory(account.id).length} data points
-                    </div>
-                  </div>
-                );
-              })}
+              {accountsWithHistory.map((account) => (
+                <AccountSummaryCard
+                  key={account.id}
+                  account={account}
+                  dateAfter={dateAfter}
+                  dateBefore={dateBefore}
+                  period={period}
+                  convertTo={convertTo ?? undefined}
+                />
+              ))}
             </div>
 
             {/* Individual Charts */}
             <div className="space-y-8">
               {accountsWithHistory.map((account) => (
-                <div key={account.id} className="border dark:border-neutral-600 rounded-lg p-4">
-                  <BalanceChart
-                    account={account}
-                    balances={filteredBalances}
-                    height={300}
-                  />
-                </div>
+                <AccountChartSection
+                  key={account.id}
+                  account={account}
+                  dateAfter={dateAfter}
+                  dateBefore={dateBefore}
+                  period={period}
+                  convertTo={convertTo ?? undefined}
+                />
               ))}
             </div>
           </div>
         ) : (
           selectedAccountData && (
-            <div>
-              <BalanceChart
-                account={selectedAccountData}
-                balances={filteredBalances}
-                height={500}
-              />
-
-              {/* Account Details */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Current Balance</h3>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {formatCurrency(getAccountLatestBalance(selectedAccount))}
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-800 dark:text-neutral-200 mb-2">Change</h3>
-                  <div className={`text-2xl font-bold ${getAccountChangeFromFirst(selectedAccount) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                    }`}>
-                    {formatCurrency(getAccountChangeFromFirst(selectedAccount))}
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-neutral-700/50 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-800 dark:text-neutral-200 mb-2">Data Points</h3>
-                  <div className="text-2xl font-bold text-gray-600 dark:text-neutral-300">
-                    {getAccountBalanceHistory(selectedAccount).length}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <IndividualAccountView
+              account={selectedAccountData}
+              dateAfter={dateAfter}
+              dateBefore={dateBefore}
+              period={period}
+              convertTo={convertTo ?? undefined}
+            />
           )
         )}
       </div>

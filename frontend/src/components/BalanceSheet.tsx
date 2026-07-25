@@ -1,26 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useAppSelector } from '@/redux/hooks';
 import { CurrencySelector } from './CurrencySelector';
 import WelcomeScreen from './WelcomeScreen';
 import { ManageAccountModal } from './ManageAccountModal';
 import { ConfirmationModal } from './ui/ConfirmationModal';
-import { AccountRead, useAccountsDestroyMutation, useAccountsListQuery, } from '@/redux/api';
-import { allPages } from '@/constants/constants';
+import { AccountRead, useAccountsDestroyMutation, useAccountsListQuery, useAnalyticsNetWorthRetrieveQuery, } from '@/redux/api';
+import { allPages, CURRENCY_SYMBOLS } from '@/constants/constants';
 import { toast } from 'sonner';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
+import type { CurrencyEnum } from '@/redux/api';
+import { renderSnakeCase } from '@/lib/renderSnakeCase';
 
-const AccountSection = ({ title, accounts, total, type, isDestroying, setEditingAccount, setAccountToDelete }: {
+const currencyLabel = (currency: CurrencyEnum | null | undefined): string =>
+  CURRENCY_SYMBOLS[currency ?? 'UAH'];
+
+const AccountSection = ({ title, accounts, total, type, isDestroying, setEditingAccount, setAccountToDelete, convertTo }: {
   title: string;
   accounts: Record<string, AccountRead[]>;
-  total: number;
+  total: number | undefined;
   type: 'asset' | 'liability' | 'equity';
   isDestroying?: boolean;
   setEditingAccount: (account: AccountRead) => void;
   setAccountToDelete: (account: AccountRead) => void;
+  convertTo: CurrencyEnum | null;
 }) => {
-  const { formatCurrency } = useCurrency();
   return (
     <div className="mb-8">
       <h2 className="text-xl font-bold text-gray-800 dark:text-neutral-100 mb-4 pb-2 border-b border-gray-300 dark:border-neutral-600">
@@ -28,7 +33,7 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
       </h2>
       {Object.entries(accounts).map(([category, categoryAccounts]) => (
         <div key={category} className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-neutral-300 mb-2">{category}</h3>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-neutral-300 mb-2">{renderSnakeCase(category)}</h3>
           <div className="space-y-1">
             {categoryAccounts.map((account) => (
               <div
@@ -37,9 +42,9 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
               >
                 <span className="text-gray-800 dark:text-neutral-200">{account.name}</span>
                 <div className="flex items-center">
-                  <span className={`mr-2 font-medium ${parseFloat(account.current_balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  <span className={`mr-2 font-medium ${parseFloat(account.latest_balance) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                     }`}>
-                    {formatCurrency(parseFloat(account.current_balance))}
+                    {account.latest_balance} {currencyLabel(convertTo ?? account.currency)}
                   </span>
                   <button
                     onClick={() => setEditingAccount(account)}
@@ -49,7 +54,6 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
                     <IconEdit />
                   </button>
                   <button
-                    // onClick={() => onDeleteAccount(account.id)}
                     onClick={() => setAccountToDelete(account)}
                     className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                     title="Delete account"
@@ -63,16 +67,14 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
           </div>
           <div className="text-right mt-2 mr-3">
             <span className="text-sm font-medium text-gray-600 dark:text-neutral-400">
-              {category} Total: {formatCurrency(
-                categoryAccounts.reduce((sum, account) => sum + parseFloat(account.current_balance), 0)
-              )}
+              {renderSnakeCase(category)} total: {categoryAccounts.reduce((sum, account) => sum + parseFloat(account.latest_balance), 0).toFixed(2)} {currencyLabel(convertTo)}
             </span>
           </div>
         </div>
       ))}
       <div className="text-right font-bold text-lg border-t border-gray-300 dark:border-neutral-600 pt-2 mt-4">
         <span className={`${type === 'asset' ? 'text-green-700 dark:text-green-400' : type === 'liability' ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
-          Total {title}: {formatCurrency(total)}
+          Total {title}: {total?.toFixed(2) ?? 0} {currencyLabel(convertTo)}
         </span>
       </div>
     </div>
@@ -80,10 +82,11 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
 }
 
 export const BalanceSheet = () => {
-  const { data: accounts, isLoading } = useAccountsListQuery({ pageSize: allPages })
+  const convertTo = useAppSelector(state => state.currency.convertTo);
+  const { data: accounts, isLoading } = useAccountsListQuery({ pageSize: allPages, convertTo: convertTo ?? undefined })
+  const { data: analytics, isLoading: isAnalyticsLoading } = useAnalyticsNetWorthRetrieveQuery({ convertTo: convertTo ?? undefined });
   const [destroyAccount, { isLoading: isDestroying }] = useAccountsDestroyMutation();
 
-  const { formatCurrency } = useCurrency();
   const [editingAccount, setEditingAccount] = useState<AccountRead | null>(null);
   const [accountToDelete, setAccountToDelete] = useState<AccountRead | null>(null);
 
@@ -103,14 +106,11 @@ export const BalanceSheet = () => {
   const calculateTotalByType = (accounts: AccountRead[], type: string) => {
     return accounts
       .filter(account => account.type === type)
-      .reduce((total, account) => total + parseFloat(account.current_balance), 0);
+      .reduce((total, account) => total + parseFloat(account.latest_balance), 0);
   };
 
   const groupedAccounts = groupAccountsByType(accounts?.results || []);
-  const totalAssets = calculateTotalByType(accounts?.results || [], 'asset');
-  const totalLiabilities = calculateTotalByType(accounts?.results || [], 'liability');
   const totalEquity = calculateTotalByType(accounts?.results || [], 'equity');
-  const netWorth = totalAssets - totalLiabilities;
 
   const onDeleteAccount = (accountId: number) => {
     destroyAccount({ id: accountId }).unwrap().then(() => {
@@ -119,7 +119,7 @@ export const BalanceSheet = () => {
   }
 
   // Show loading state during initial data fetch
-  if (isLoading) {
+  if (isLoading || isAnalyticsLoading) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg dark:shadow-neutral-900/50 p-6">
@@ -137,7 +137,8 @@ export const BalanceSheet = () => {
     );
   }
 
-  if (accounts?.results.length === 0) {
+  if (!accounts?.results.length) {
+    console.log("welcome screen")
     return <WelcomeScreen />;
   }
 
@@ -152,17 +153,18 @@ export const BalanceSheet = () => {
         </div>
         {/* Currency Selection */}
         <div className="mb-8 flex justify-end">
-          <CurrencySelector size="sm" />
+          <CurrencySelector size="sm" showLabel={false} />
         </div>
         {groupedAccounts.asset && (
           <AccountSection
             title="Assets"
             accounts={groupedAccounts.asset}
-            total={totalAssets}
+            total={analytics?.assets_total}
             type="asset"
             isDestroying={isDestroying}
             setEditingAccount={setEditingAccount}
             setAccountToDelete={setAccountToDelete}
+            convertTo={convertTo}
           />
         )}
 
@@ -171,11 +173,12 @@ export const BalanceSheet = () => {
           <AccountSection
             title="Liabilities"
             accounts={groupedAccounts.liability}
-            total={totalLiabilities}
+            total={analytics?.liabilities_total}
             type="liability"
             isDestroying={isDestroying}
             setEditingAccount={setEditingAccount}
             setAccountToDelete={setAccountToDelete}
+            convertTo={convertTo}
           />
         )}
 
@@ -189,6 +192,7 @@ export const BalanceSheet = () => {
             isDestroying={isDestroying}
             setEditingAccount={setEditingAccount}
             setAccountToDelete={setAccountToDelete}
+            convertTo={convertTo}
           />
         )}
 
@@ -199,19 +203,19 @@ export const BalanceSheet = () => {
               <div>
                 <div className="text-sm text-gray-600 dark:text-neutral-400">Total Assets</div>
                 <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(totalAssets)}
+                  {analytics?.assets_total} {currencyLabel(convertTo)}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 dark:text-neutral-400">Total Liabilities</div>
                 <div className="text-lg font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(totalLiabilities)}
+                  {analytics?.liabilities_total} {currencyLabel(convertTo)}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 dark:text-neutral-400">Net Worth</div>
-                <div className={`text-xl font-bold ${netWorth >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                  {formatCurrency(netWorth)}
+                <div className={`text-xl font-bold ${(analytics?.net_worth || 0) >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                  {analytics?.net_worth} {currencyLabel(convertTo)}
                 </div>
               </div>
             </div>
