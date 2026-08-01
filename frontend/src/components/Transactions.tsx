@@ -91,16 +91,30 @@ export const Transactions = () => {
 
           {/* Filter bar — row 1: categorical + date filters */}
           <div className="flex flex-wrap gap-3 mb-3">
-            <select
-              value={queryArg.account?.[0] ?? ''}
-              onChange={e => setValue('account', e.target.value ? [Number(e.target.value)] : undefined)}
-              className={inputClass}
-            >
-              <option value="">All accounts</option>
-              {accounts?.results.map(a => (
-                <option key={a.id} value={a.id}>{CURRENCY_SYMBOLS[a.currency]} {a.name}</option>
-              ))}
-            </select>
+            <div className="flex flex-col gap-1">
+              <select
+                multiple
+                value={(queryArg.account ?? []).map(String)}
+                onChange={e => {
+                  const selected = Array.from(e.target.selectedOptions, o => Number(o.value));
+                  setValue('account', selected.length ? selected : undefined);
+                }}
+                className={`${inputClass} min-w-[200px]`}
+              >
+                {accounts?.results.map(a => (
+                  <option key={a.id} value={a.id}>{CURRENCY_SYMBOLS[a.currency]} {a.name}</option>
+                ))}
+              </select>
+              {!!queryArg.account?.length && (
+                <button
+                  type="button"
+                  onClick={() => setValue('account', undefined)}
+                  className="self-start text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Clear accounts
+                </button>
+              )}
+            </div>
             <select
               value={queryArg.type ?? ''}
               onChange={e => setValue('type', (e.target.value || undefined) as 'income' | 'expense' | undefined)}

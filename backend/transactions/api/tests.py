@@ -542,6 +542,10 @@ class TransactionTests(BaseAPITest):
         for t in resp.data["results"]:
             self.assertEqual(t["account"]["id"], self.account.id)
 
+        resp = self.client.get(f"{self.list_url}?account={self.account.id},{another_account.id}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 5)
+
     def test_filter_by_type(self):
         TransactionFactory.create_batch(3, account=self.account, type=TransactionType.INCOME)
         TransactionFactory.create_batch(2, account=self.account, type=TransactionType.EXPENSE)

@@ -186,6 +186,8 @@ paths:
                 file:
                   type: string
                   format: binary
+                  description: 'Transaction file to import. Accepted formats: .csv,
+                    .xlsx'
       security:
       - jwtAuth: []
       responses:
@@ -981,6 +983,7 @@ components:
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
           nullable: true
+          readOnly: true
         latest_balance:
           type: string
           format: decimal
@@ -999,6 +1002,7 @@ components:
       required:
       - category
       - created_at
+      - credit_limit
       - currency
       - id
       - latest_balance

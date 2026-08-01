@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Account, AccountRead, useAccountsPartialUpdateMutation } from '@/redux/api';
+import { AccountRead, useAccountsPartialUpdateMutation, WriteAccount } from '@/redux/api';
 import { useForm } from 'react-hook-form';
 import { ACCOUNT_CATEGORIES, ACCOUNT_TYPES, CURRENCY_OPTIONS } from '@/constants/financeConstants';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ interface ManageAccountModalProps {
 
 export const ManageAccountModal = ({ account, onClose }: ManageAccountModalProps) => {
   const [updateAccount, { isLoading: isUpdating }] = useAccountsPartialUpdateMutation();
-  const { register, handleSubmit, watch, setValue } = useForm<Account>({
+  const { register, handleSubmit, watch, setValue } = useForm<WriteAccount>({
     defaultValues: {
       ...account,
       category: account.category
@@ -27,7 +27,7 @@ export const ManageAccountModal = ({ account, onClose }: ManageAccountModalProps
   }, [selectedType, setValue]);
 
 
-  const onSubmit = (values: Account) => {
+  const onSubmit = (values: WriteAccount) => {
 
     updateAccount({ id: account.id, patchedWriteAccount: values }).unwrap().then(() => {
       toast.success('Account updated successfully!');

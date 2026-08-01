@@ -420,6 +420,7 @@ export type AccountsImportTransactionCreateApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
   body: {
+    /** Transaction file to import. Accepted formats: .csv, .xlsx */
     file?: Blob;
   };
 };
@@ -624,7 +625,6 @@ export type Account = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
-  credit_limit?: string | null;
   is_active?: boolean;
 };
 export type AccountRead = {
@@ -633,7 +633,7 @@ export type AccountRead = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
-  credit_limit?: string | null;
+  credit_limit: string | null;
   latest_balance: string;
   is_active?: boolean;
   created_at: string;
