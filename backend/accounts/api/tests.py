@@ -1,6 +1,7 @@
 import threading
 from datetime import date
 from decimal import Decimal
+from io import BytesIO
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -8,6 +9,7 @@ from django.db import connections
 from django.test import TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
+from openpyxl import Workbook
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -129,6 +131,22 @@ class AccountTests(BaseAPITest):
         account = resp.data["results"][0]
         self.assertEqual(account["id"], eur_account.id)
         self.assertEqual(Decimal(account["latest_balance"]), Decimal("115.34"))
+
+    def test_convert_credit_limit_uan_usd(self):
+        with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
+            uan_account = AccountFactory.create(
+                user=self.user,
+                type=AccountType.LIABILITY,
+                category=AccountCategory.CREDIT_CARD,
+                currency=AccountCurrency.UAH,
+                credit_limit=Decimal(10000),
+            )
+            url = reverse("account-list") + "?convert_to=USD"
+            resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        account = resp.data["results"][0]
+        self.assertEqual(account["id"], uan_account.id)
+        self.assertEqual(Decimal(account["credit_limit"]), Decimal("225.05"))
 
     def test_convert_latest_balance_no_rates_returns_503(self):
         with patch("accounts.api.views.get_exchange_rates", return_value=[]):
@@ -469,6 +487,20 @@ class ImportTransactionTests(BaseAPITest):
         content = "\n".join([self.CSV_HEADER, *rows]).encode("utf-8")
         return SimpleUploadedFile("transactions.csv", content, content_type="text/csv")
 
+    def _make_xlsx(self, *rows):
+        wb = Workbook()
+        ws = wb.active
+        ws.append(["Date and time", "Description", "Amount", "Category"])
+        for row in rows:
+            ws.append(row)
+        buf = BytesIO()
+        wb.save(buf)
+        return SimpleUploadedFile(
+            "transactions.xlsx",
+            buf.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
     def test_import_success(self):
         file = self._make_csv(
             "22.04.2026 10:00:00,Salary,1000.00,Electronics",
@@ -499,10 +531,86 @@ class ImportTransactionTests(BaseAPITest):
         self.assertEqual(balance_record.amount, Decimal("950.00"))
         self.assertEqual(balance_record.date, date(2026, 4, 23))
 
+    def test_import_xlsx_success(self):
+        file = self._make_xlsx(
+            ["22.04.2026 10:00:00", "Salary", 1000.00, "Electronics"],
+            ["23.04.2026 12:00:00", "Coffee", -50.00, "Food"],
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 2)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 2)
+
+        income = Transaction.objects.get(account=self.account, type=TransactionType.INCOME)
+        self.assertEqual(income.amount, Decimal("1000.00"))
+        self.assertEqual(income.date, date(2026, 4, 22))
+
+        expense = Transaction.objects.get(account=self.account, type=TransactionType.EXPENSE)
+        self.assertEqual(expense.amount, Decimal("50.00"))
+
+        balance_record = BalanceRecord.objects.filter(account=self.account).first()
+        self.assertIsNotNone(balance_record)
+        self.assertEqual(balance_record.amount, Decimal("950.00"))
+
+    def test_import_xlsx_decimal_precision(self):
+        file = self._make_xlsx(["01.01.2026 10:00:00", "Cents test", 19.99, "Food"])
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        transaction = Transaction.objects.get(account=self.account)
+        self.assertEqual(transaction.amount, Decimal("19.99"))
+
+    def test_import_xlsx_missing_amount(self):
+        file = self._make_xlsx(["01.01.2026 10:00:00", "Salary", None, "Electronics"])
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_xlsx_duplicate_file(self):
+        file = self._make_xlsx(["22.04.2026 10:00:00", "Salary", 1000.00, "Electronics"])
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        file.seek(0)
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 1)
+
+    def test_import_unsupported_extension_rejected(self):
+        file = SimpleUploadedFile("transactions.txt", b"irrelevant content", content_type="text/plain")
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_corrupt_xlsx_rejected(self):
+        file = SimpleUploadedFile(
+            "transactions.xlsx",
+            b"not a real xlsx file",
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_xlsx_case_insensitive_extension(self):
+        file = self._make_xlsx(["22.04.2026 10:00:00", "Salary", 1000.00, "Electronics"])
+        file.name = "TRANSACTIONS.XLSX"
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["imported"], 1)
+
     def test_import_missing_amount(self):
         file = self._make_csv("01.01.2026 10:00:00,Salary,,Electronics")
         resp = self.client.post(self.url, {"file": file}, format="multipart")
         self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
+
+    def test_import_invalid_row_reports_line_number(self):
+        file = self._make_csv(
+            "22.04.2026 10:00:00,Salary,1000.00,Electronics",
+            "not-a-date,Coffee,-50.00,Food",
+        )
+        resp = self.client.post(self.url, {"file": file}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data["details"], ["Line 3: Invalid date: not-a-date"])
         self.assertEqual(Transaction.objects.filter(account=self.account).count(), 0)
 
     def test_import_missing_date(self):

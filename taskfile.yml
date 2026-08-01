@@ -90,3 +90,20 @@ tasks:
     cmds:
       - poetry run python manage.py admin_generator {{.CLI_ARGS}} > {{.CLI_ARGS}}/admin.py
       - poetry run ruff check {{.CLI_ARGS}}/admin.py --fix --unsafe-fixes
+  dev.install:
+    desc: Install Frontend and Backend dependencies
+    deps:
+      - dev.install.be
+      - dev.install.fe
+    cmds:
+      - prek install --overwrite
+  dev.install.be:
+    dir: backend
+    cmds:
+      - poetry install --all-groups
+    silent: true
+  dev.install.fe:
+    dir: frontend
+    cmds:
+      - yarn install
+    silent: true

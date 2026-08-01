@@ -20,6 +20,7 @@ export const ManageAccountModal = ({ account, onClose }: ManageAccountModalProps
     }
   })
   const selectedType = watch('type', 'asset')
+  const selectedCategory = watch('category')
 
   useEffect(() => {
     setValue('category', ACCOUNT_CATEGORIES[selectedType][0]);
@@ -113,6 +114,21 @@ export const ManageAccountModal = ({ account, onClose }: ManageAccountModalProps
               ))}
             </select>
           </div>
+
+          {selectedCategory === 'credit_card' && (
+            <div>
+              <label htmlFor="creditLimit" className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">
+                Credit Limit
+              </label>
+              <input
+                type="number"
+                id="creditLimit"
+                {...register('credit_limit')}
+                className="w-full border border-gray-300 dark:border-neutral-600 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100"
+                placeholder="e.g., 5000"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end space-x-3 pt-2">
             <button
