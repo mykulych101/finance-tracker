@@ -48,6 +48,15 @@ class TransactionTests(BaseAPITest):
         for field in required_fields:
             self.assertIn(field, transaction)
 
+    def test_retrieve_non_active_account(self):
+        transactions_count = 5
+        non_active_account = AccountFactory.create(user=self.user, is_active=False)
+        TransactionFactory.create_batch(transactions_count, account=non_active_account)
+        self.assertEqual(Transaction.objects.count(), transactions_count)
+        resp = self.client.get(self.list_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 0)
+
     def test_order_by_amount(self):
         TransactionFactory.create(
             account=self.account, amount=Decimal("20.00"), type=TransactionType.EXPENSE, date="2024-01-01"

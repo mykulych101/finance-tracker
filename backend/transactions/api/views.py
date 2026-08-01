@@ -24,7 +24,7 @@ class TransactionViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Transaction.objects.filter(account__user=user).select_related("account")
+        return Transaction.objects.filter(account__user=user, account__is_active=True).select_related("account")
 
     @atomic
     def destroy(self, request, *args, **kwargs):
