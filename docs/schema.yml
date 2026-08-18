@@ -432,6 +432,7 @@ paths:
       description: Bulk create balance records.
       tags:
       - balances
+      - accounts
       requestBody:
         content:
           application/json:
@@ -840,6 +841,7 @@ paths:
       operationId: transactions_create
       tags:
       - transactions
+      - accounts
       requestBody:
         content:
           application/json:
@@ -893,6 +895,7 @@ paths:
         required: true
       tags:
       - transactions
+      - accounts
       requestBody:
         content:
           application/json:
@@ -925,6 +928,7 @@ paths:
         required: true
       tags:
       - transactions
+      - accounts
       requestBody:
         content:
           application/json:
@@ -956,6 +960,7 @@ paths:
         required: true
       tags:
       - transactions
+      - accounts
       security:
       - jwtAuth: []
       responses:

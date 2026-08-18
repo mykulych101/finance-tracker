@@ -189,7 +189,7 @@ const injectedRtkApi = api
           method: "POST",
           body: queryArg.body,
         }),
-        invalidatesTags: ["balances"],
+        invalidatesTags: ["balances", "accounts"],
       }),
       balancesLatestRetrieve: build.query<
         BalancesLatestRetrieveApiResponse,
@@ -334,7 +334,7 @@ const injectedRtkApi = api
           method: "POST",
           body: queryArg.writeTransaction,
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
       transactionsRetrieve: build.query<
         TransactionsRetrieveApiResponse,
@@ -352,7 +352,7 @@ const injectedRtkApi = api
           method: "PUT",
           body: queryArg.writeTransaction,
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
       transactionsPartialUpdate: build.mutation<
         TransactionsPartialUpdateApiResponse,
@@ -363,7 +363,7 @@ const injectedRtkApi = api
           method: "PATCH",
           body: queryArg.patchedWriteTransaction,
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
       transactionsDestroy: build.mutation<
         TransactionsDestroyApiResponse,
@@ -373,7 +373,7 @@ const injectedRtkApi = api
           url: `/api/transactions/${queryArg.id}/`,
           method: "DELETE",
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
     }),
     overrideExisting: false,

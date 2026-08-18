@@ -30,6 +30,7 @@ class BalanceRecordViewSet(
         )
 
     @extend_schema(
+        tags=["balances", "accounts"],
         request=BalanceRecordSerializer(many=True),
         responses={201: None},
         description="Bulk create balance records.",

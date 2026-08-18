@@ -1,5 +1,6 @@
 from django.db.transaction import atomic
 from django_filters import rest_framework as filters
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,6 +12,12 @@ from transactions.api.services import destroy_transaction
 from transactions.models import Transaction
 
 
+@extend_schema_view(
+    create=extend_schema(tags=["transactions", "accounts"]),
+    update=extend_schema(tags=["transactions", "accounts"]),
+    partial_update=extend_schema(tags=["transactions", "accounts"]),
+    destroy=extend_schema(tags=["transactions", "accounts"]),
+)
 class TransactionViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Transaction.objects.all()

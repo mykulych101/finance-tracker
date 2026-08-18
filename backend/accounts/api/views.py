@@ -25,6 +25,7 @@ from transactions.models import TransactionImport
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["accounts"],
         parameters=[
             OpenApiParameter(
                 name="convert_to",
@@ -33,7 +34,7 @@ from transactions.models import TransactionImport
                 enum=AccountCurrency.values,
                 description="Convert all balances to. this currency.",
             )
-        ]
+        ],
     )
 )
 class AccountViewSet(ModelViewSet):
