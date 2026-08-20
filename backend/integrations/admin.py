@@ -1,17 +1,18 @@
 from django.contrib import admin
 
-from integrations.models import ExchangeRate
+from .models import ExchangeRate
 
 
 @admin.register(ExchangeRate)
 class ExchangeRateAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "currency_code_a",
         "currency_code_b",
+        "monobank_date",
         "rate_buy",
         "rate_sell",
         "rate_cross",
-        "monobank_date",
         "fetched_at",
     )
-    ordering = ("currency_code_a", "currency_code_b")
+    list_filter = ("fetched_at",)

@@ -233,6 +233,16 @@ $ task dev.beat
 
 - **Web UI:** http://localhost:8050
 
+## 🧩 Generating admin.py
+
+Generate `admin.py` for an app from its models:
+
+```shell
+$ task dev.generate_admin -- accounts
+```
+
+Pass exactly one app label (must match the directory name under `backend/`). It **overwrites** the app's existing `admin.py`, so commit your changes first.
+
 ## Deploying the project to the server
 
 - [Automated provisioning with Ansible](docs/deployment_automated.md)
