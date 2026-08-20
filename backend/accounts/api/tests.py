@@ -18,7 +18,7 @@ from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.models import Account
 from balances.api.factories import BalanceRecordFactory
 from balances.models import BalanceRecord
-from core.api.tests import MOCK_RATES, BaseAPITest
+from core.api.tests import MOCK_RATES, BaseAPITest, VerifiedPermissionTestMixin
 from transactions.constants import TransactionType
 from transactions.models import Transaction
 from users.models import User
@@ -696,7 +696,8 @@ class ConcurrentImportRegressionTests(TransactionTestCase):
             name="Concurrent User",
         )
         self.user.is_active = True
-        self.user.save(update_fields=["is_active"])
+        self.user.is_verified = True
+        self.user.save(update_fields=["is_active", "is_verified"])
         token = AccessToken.for_user(self.user)
         self.auth_header = f"Bearer {token}"
         self.account = AccountFactory.create(user=self.user)
@@ -736,3 +737,7 @@ class ConcurrentImportRegressionTests(TransactionTestCase):
             [200, 400],
         )
         self.assertEqual(Transaction.objects.filter(account=self.account).count(), 1)
+
+
+class AccountVerifiedPermissionTests(VerifiedPermissionTestMixin, BaseAPITest):
+    gated_url_name = "account-list"

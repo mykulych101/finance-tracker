@@ -519,7 +519,7 @@ export type ProfilePartialUpdateApiResponse =
 export type ProfilePartialUpdateApiArg = {
   patchedUserProfile: PatchedUserProfile;
 };
-export type RegisterCreateApiResponse = /** status 201  */ RegisterResponseRead;
+export type RegisterCreateApiResponse = /** status 201  */ UserRead;
 export type RegisterCreateApiArg = {
   user: UserWrite;
 };
@@ -543,7 +543,7 @@ export type TransactionsListApiArg = {
   description?: string;
   isSystem?: boolean;
   /** Ordering
-
+    
     * `type` - Type
     * `-type` - Type (descending)
     * `amount` - Amount
@@ -765,6 +765,7 @@ export type UserProfileRead = {
   id: number;
   email: string;
   name: string;
+  is_verified: boolean;
 };
 export type PatchedUserProfile = {
   name?: string;
@@ -773,6 +774,7 @@ export type PatchedUserProfileRead = {
   id?: number;
   email?: string;
   name?: string;
+  is_verified?: boolean;
 };
 export type User = {
   name: string;
@@ -787,21 +789,6 @@ export type UserWrite = {
   name: string;
   password: string;
   email: string;
-};
-export type RegisterResponse = {
-  user: User;
-  access: string;
-  refresh: string;
-};
-export type RegisterResponseRead = {
-  user: UserRead;
-  access: string;
-  refresh: string;
-};
-export type RegisterResponseWrite = {
-  user: UserWrite;
-  access: string;
-  refresh: string;
 };
 export type TokenObtainPair = {};
 export type TokenObtainPairRead = {

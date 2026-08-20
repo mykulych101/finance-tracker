@@ -1,11 +1,9 @@
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import generics, status
 from rest_framework.generics import UpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
@@ -14,14 +12,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from users.models import User
 from users.tasks import send_email
-from users.utils import account_activation_token
+from users.utils import account_activation_token, build_activation_url
 
 from .serializers import (
     ChangePasswordSerializer,
     LoginResponseSerializer,
     LogoutSerializer,
     MyTokenObtainPairSerializer,
-    RegisterResponseSerializer,
     UserProfileSerializer,
     UserSerializer,
 )
@@ -31,53 +28,29 @@ from .serializers import (
 @extend_schema_view(
     post=extend_schema(
         request=UserSerializer,
-        responses={201: RegisterResponseSerializer},
+        responses={201: UserSerializer},
     ),
 )
 class RegisterView(generics.CreateAPIView):
+    """Create an account and email an activation link.
+
+    No JWT tokens here on purpose: they would be useless until the email is
+    confirmed, since every data endpoint sits behind `IsVerified`. Tokens are
+    issued by `LoginView` once the account is activated.
+    """
+
+    permission_classes = (AllowAny,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def create(self, request, *args, **kwargs):
-        # Use the serializer to validate and create the new user
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def perform_create(self, serializer):
         user = serializer.save()
-
-        # mail settings
-        frontend_url = settings.FRONTEND_URL
-        mail_subject = "Activate your account"
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = account_activation_token.make_token(user)
-        activation_link = f"{frontend_url}/activate/{uid}/{token}/"
-        message = render_to_string(
-            "email/activation_email.html",
-            {
-                "user": user,
-                "activation_link": activation_link,
-            },
-        )
-
-        # Send verification email via Celery
         send_email.delay(
-            user.id,
-            mail_subject=mail_subject,
-            message=message,
+            subject="Activate your account",
+            template="email/activation_email.html",
+            recipients=[user.email],
+            context={"user_name": user.name, "activation_link": build_activation_url(user)},
         )
-
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        # # Prepare the response data
-        response_data = {
-            "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "access": access_token,
-            "refresh": refresh_token,
-        }
-
-        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(
@@ -86,10 +59,13 @@ class RegisterView(generics.CreateAPIView):
     responses=LoginResponseSerializer,
 )
 class LoginView(TokenObtainPairView):
+    permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
 
 
 class LogoutView(APIView):
+    # Deliberately not IsVerified: ending a session must work even if the
+    # account loses its verified status while the token is still alive.
     permission_classes = (IsAuthenticated,)
 
     @extend_schema(
@@ -114,7 +90,6 @@ class LogoutView(APIView):
 class ChangePasswordView(UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     model = User
-    permission_classes = (IsAuthenticated,)
 
     def get_object(self, queryset=None):
         return self.request.user
@@ -143,6 +118,8 @@ class ChangePasswordView(UpdateAPIView):
 
 
 class ActivateAccountView(APIView):
+    permission_classes = (AllowAny,)
+
     @extend_schema(
         parameters=[
             OpenApiParameter("uidb64", type=str, location=OpenApiParameter.PATH),
@@ -181,7 +158,6 @@ class ActivateAccountView(APIView):
     ),
 )
 class UserProfileView(generics.RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
     def get_object(self):

@@ -9,7 +9,7 @@ from accounts.api.factories import AccountFactory
 from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.models import Account
 from balances.api.factories import BalanceRecordFactory
-from core.api.tests import MOCK_RATES, BaseAPITest
+from core.api.tests import MOCK_RATES, BaseAPITest, VerifiedPermissionTestMixin
 
 
 class AnalyticsTests(BaseAPITest):
@@ -431,3 +431,7 @@ class AnalyticsTests(BaseAPITest):
 
         # Jan 2 has no new records — every account carries forward unchanged.
         self.assertEqual(Decimal(response.data[1]["net_worth"]), Decimal("-2000.00"))
+
+
+class AnalyticsVerifiedPermissionTests(VerifiedPermissionTestMixin, BaseAPITest):
+    gated_url_name = "analytics-net-worth"

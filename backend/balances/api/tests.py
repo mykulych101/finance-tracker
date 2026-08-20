@@ -8,7 +8,7 @@ from django.utils import timezone
 from accounts.api.factories import AccountFactory
 from balances.api.factories import BalanceRecordFactory
 from balances.models import BalanceRecord
-from core.api.tests import BaseAPITest
+from core.api.tests import BaseAPITest, VerifiedPermissionTestMixin
 from transactions.constants import TransactionType
 from transactions.models import Transaction
 
@@ -384,3 +384,7 @@ class BalanceRecordTests(BaseAPITest):
                 self.assertEqual(br.amount, amount_before + propagation_delta)
             else:
                 self.assertEqual(br.amount, amount_before)
+
+
+class BalanceRecordVerifiedPermissionTests(VerifiedPermissionTestMixin, BaseAPITest):
+    gated_url_name = "balances-list"

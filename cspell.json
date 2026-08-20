@@ -21,6 +21,9 @@
         "filterset",
         "viewsets",
         "genbadge",
-        "MONOBANK"
+        "MONOBANK",
+        "uidb64",
+        "paginators",
+        "resends"
     ]
 }

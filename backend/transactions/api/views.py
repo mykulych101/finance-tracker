@@ -2,7 +2,6 @@ from django.db.transaction import atomic
 from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -19,7 +18,6 @@ from transactions.models import Transaction
     destroy=extend_schema(tags=["transactions", "accounts"]),
 )
 class TransactionViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated]
     queryset = Transaction.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TransactionFilters

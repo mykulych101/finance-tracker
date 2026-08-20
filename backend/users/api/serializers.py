@@ -32,12 +32,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "password", "email")
 
 
-class RegisterResponseSerializer(serializers.Serializer):
-    user = UserSerializer()
-    access = serializers.CharField()
-    refresh = serializers.CharField()
-
-
 class LoginResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
     refresh = serializers.CharField()
@@ -57,8 +51,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "email", "name")
-        read_only_fields = ("id", "email")
+        fields = ("id", "email", "name", "is_verified")
+        read_only_fields = ("id", "email", "is_verified")
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
