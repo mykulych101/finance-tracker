@@ -62,6 +62,7 @@ export const authSlice = createSlice({
       localStorage.removeItem('refresh')
       localStorage.removeItem('userId')
       state.access = null
+      state.refresh = null
       state.isAuthenticated = false
       state.user = null
       state.userId = null
