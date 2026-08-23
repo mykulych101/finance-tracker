@@ -34,7 +34,7 @@ tasks:
   dev.up:
     desc: "Start dev dependencies"
     cmds:
-      - docker compose -f compose.dev.yml up postgres redis mailhog --wait
+      - docker compose -f compose.dev.yml up postgres redis mailpit --wait
       - docker compose -f compose.dev.yml exec -it redis redis-cli FLUSHALL
   dev.down:
     desc: "Stop dev dependencies"
