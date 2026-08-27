@@ -1,3 +1,4 @@
+from django.contrib import admin
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -121,11 +122,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return hashlib.md5(self.email.lower().encode("utf-8"), usedforsecurity=False).hexdigest()
 
+    @admin.display(boolean=True)
     def has_usable_password(self) -> bool:
         """Checks if the user has a usable password."""
         return super().has_usable_password()
-
-    has_usable_password.boolean = True
 
     @property
     def days_on_site(self) -> int:

@@ -5,12 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { useLogoutCreateMutation } from '@/redux/api';
+import { backendApi, useLogoutCreateMutation } from '@/redux/api';
 import { toast } from 'sonner';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 
 const Navigation = () => {
   const { user, refresh } = useAppSelector(state => state.auth)
+  const dispatch = useAppDispatch()
   const [logoutCreate, { isLoading: isLogoutLoading }] = useLogoutCreateMutation()
   const pathname = usePathname();
   const router = useRouter()
@@ -45,6 +46,7 @@ const Navigation = () => {
     if (!refresh) return null
 
     logoutCreate({ logout: { refresh } }).then(() => {
+      dispatch(backendApi.util.resetApiState());
       router.push('/login');
     }).catch(() => {
       toast.error('Logout failed. Please try again.');

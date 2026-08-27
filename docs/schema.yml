@@ -186,6 +186,8 @@ paths:
                 file:
                   type: string
                   format: binary
+                  description: 'Transaction file to import. Accepted formats: .csv,
+                    .xlsx'
       security:
       - jwtAuth: []
       responses:
@@ -430,6 +432,7 @@ paths:
       description: Bulk create balance records.
       tags:
       - balances
+      - accounts
       requestBody:
         content:
           application/json:
@@ -543,6 +546,8 @@ paths:
             schema:
               $ref: '#/components/schemas/MyTokenObtainPair'
         required: true
+      security:
+      - {}
       responses:
         '200':
           content:
@@ -640,6 +645,12 @@ paths:
   /api/register/:
     post:
       operationId: register_create
+      description: |-
+        Create an account and email an activation link.
+
+        No JWT tokens here on purpose: they would be useless until the email is
+        confirmed, since every data endpoint sits behind `IsVerified`. Tokens are
+        issued by `LoginView` once the account is activated.
       tags:
       - authentication
       requestBody:
@@ -662,7 +673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RegisterResponse'
+                $ref: '#/components/schemas/User'
           description: ''
   /api/token/:
     post:
@@ -838,6 +849,7 @@ paths:
       operationId: transactions_create
       tags:
       - transactions
+      - accounts
       requestBody:
         content:
           application/json:
@@ -891,6 +903,7 @@ paths:
         required: true
       tags:
       - transactions
+      - accounts
       requestBody:
         content:
           application/json:
@@ -923,6 +936,7 @@ paths:
         required: true
       tags:
       - transactions
+      - accounts
       requestBody:
         content:
           application/json:
@@ -954,6 +968,7 @@ paths:
         required: true
       tags:
       - transactions
+      - accounts
       security:
       - jwtAuth: []
       responses:
@@ -981,6 +996,7 @@ components:
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
           nullable: true
+          readOnly: true
         latest_balance:
           type: string
           format: decimal
@@ -999,6 +1015,7 @@ components:
       required:
       - category
       - created_at
+      - credit_limit
       - currency
       - id
       - latest_balance
@@ -1322,6 +1339,10 @@ components:
           type: string
           title: Full name
           maxLength: 255
+        is_verified:
+          type: boolean
+          readOnly: true
+          title: Email verified
     PatchedWriteAccount:
       type: object
       properties:
@@ -1417,19 +1438,6 @@ components:
       - is_system
       - type
       - updated_at
-    RegisterResponse:
-      type: object
-      properties:
-        user:
-          $ref: '#/components/schemas/User'
-        access:
-          type: string
-        refresh:
-          type: string
-      required:
-      - access
-      - refresh
-      - user
     TokenObtainPair:
       type: object
       properties:
@@ -1508,9 +1516,14 @@ components:
           type: string
           title: Full name
           maxLength: 255
+        is_verified:
+          type: boolean
+          readOnly: true
+          title: Email verified
       required:
       - email
       - id
+      - is_verified
       - name
     WriteAccount:
       type: object

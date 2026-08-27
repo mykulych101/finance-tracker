@@ -3,8 +3,9 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^frontend/src/redux/api\.ts$
       - id: end-of-file-fixer
-        exclude: ^backend/config/static/vendor/.*$
+        exclude: ^(backend/config/static/vendor/.*|docs/coverage\.svg)$
       - id: check-yaml
         exclude: ^docker/mkdocs/mkdocs\.yml$
       - id: check-added-large-files

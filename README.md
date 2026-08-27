@@ -85,7 +85,7 @@ POSTGRES_USER=dbuser
 POSTGRES_PASSWORD=dbpassword
 REDIS_URL=redis://redis:6379/0
 SITE_URL=http://myproject.local:8000
-EMAIL_HOST=mailhog
+EMAIL_HOST=mailpit
 EMAIL_PORT=1025
 CADDY_PASSWORD=<here should be hash of a password>
 ```
@@ -214,12 +214,12 @@ Celery Beat is the task scheduler — it triggers periodic tasks defined in `CEL
 $ task dev.beat
 ```
 
-### MailHog
+### Mailpit
 
-[MailHog](https://github.com/mailhog/mailhog) is a fake SMTP server that catches all outgoing emails instead of delivering them. Useful for inspecting emails (e.g. account activation links) without needing a real email provider configured.
+[Mailpit](https://github.com/axllent/mailpit) is a fake SMTP server that catches all outgoing emails instead of delivering them. Useful for inspecting emails (e.g. account activation links) without needing a real email provider configured.
 
 - **Web UI:** http://localhost:8025
-- Configured via `EMAIL_HOST=mailhog` and `EMAIL_PORT=1025` in `.env`
+- Configured via `EMAIL_HOST=mailpit` and `EMAIL_PORT=1025` in `.env`
 
 ### Flower
 
@@ -232,6 +232,16 @@ $ task dev.beat
 [MkDocs](https://www.mkdocs.org/) serves the project documentation as a live-reloading site from the `./docs` folder.
 
 - **Web UI:** http://localhost:8050
+
+## 🧩 Generating admin.py
+
+Generate `admin.py` for an app from its models:
+
+```shell
+$ task dev.generate_admin -- accounts
+```
+
+Pass exactly one app label (must match the directory name under `backend/`). It **overwrites** the app's existing `admin.py`, so commit your changes first.
 
 ## Deploying the project to the server
 

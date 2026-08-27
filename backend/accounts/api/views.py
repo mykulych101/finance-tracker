@@ -1,4 +1,5 @@
 import hashlib
+from zipfile import BadZipFile
 
 import tablib
 from django.db import IntegrityError
@@ -9,7 +10,6 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -24,6 +24,7 @@ from transactions.models import TransactionImport
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["accounts"],
         parameters=[
             OpenApiParameter(
                 name="convert_to",
@@ -32,12 +33,11 @@ from transactions.models import TransactionImport
                 enum=AccountCurrency.values,
                 description="Convert all balances to. this currency.",
             )
-        ]
+        ],
     )
 )
 class AccountViewSet(ModelViewSet):
     autocomplete_serializer_class = AccountSlimSerializer
-    permission_classes = [IsAuthenticated]
     queryset = Account.objects.all()
 
     def get_serializer_context(self):
@@ -77,7 +77,16 @@ class AccountViewSet(ModelViewSet):
     @atomic
     @extend_schema(
         request={
-            "multipart/form-data": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "Transaction file to import. Accepted formats: .csv, .xlsx",
+                    }
+                },
+            }
         },
         responses={200: None},
     )
@@ -90,9 +99,24 @@ class AccountViewSet(ModelViewSet):
             raise ValidationError({"error": "No file provided"})
         file_bytes = file.read()
         file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        extension = file.name.rsplit(".", 1)[-1].lower() if file.name and "." in file.name else ""
+        if extension not in ("csv", "xlsx"):
+            raise ValidationError({"error": "Unsupported file format. Only .csv and .xlsx files are supported"})
+
         try:
-            book = tablib.Dataset().load(file_bytes.decode("utf-8"), format="csv")
-        except (tablib.UnsupportedFormat, tablib.InvalidDimensions, ValueError, IndexError) as e:
+            if extension == "csv":
+                book = tablib.Dataset().load(file_bytes.decode("utf-8"), format="csv")
+            else:
+                book = tablib.Dataset().load(file_bytes, format="xlsx")
+        except (
+            tablib.UnsupportedFormat,
+            tablib.InvalidDimensions,
+            ValueError,
+            IndexError,
+            KeyError,
+            BadZipFile,
+        ) as e:
             raise ValidationError({"error": f"Invalid file format: {e}"})
         try:
             TransactionImport.objects.create(account=account, file_hash=file_hash)
@@ -102,5 +126,14 @@ class AccountViewSet(ModelViewSet):
         resource = TransactionResource(account=account)
         result = resource.import_data(book, dry_run=False)
         if result.has_errors() or result.has_validation_errors():
-            raise ValidationError({"error": "CSV contains invalid rows"})
+            row_errors = []
+            for invalid_row in result.invalid_rows:
+                messages = [str(m) for msgs in invalid_row.error_dict.values() for m in msgs]
+                row_errors.append((invalid_row.number, "; ".join(messages)))
+            for error_row in result.error_rows:
+                messages = [str(e.error) for e in error_row.errors]
+                row_errors.append((error_row.number, "; ".join(messages)))
+            row_errors.sort(key=lambda item: item[0])
+            details = [f"Line {number + 1}: {message}" for number, message in row_errors]
+            raise ValidationError({"error": "File contains invalid rows", "details": details})
         return Response({"imported": result.totals[RowResult.IMPORT_TYPE_NEW]}, status=status.HTTP_200_OK)

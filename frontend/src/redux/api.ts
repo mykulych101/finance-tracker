@@ -189,7 +189,7 @@ const injectedRtkApi = api
           method: "POST",
           body: queryArg.body,
         }),
-        invalidatesTags: ["balances"],
+        invalidatesTags: ["balances", "accounts"],
       }),
       balancesLatestRetrieve: build.query<
         BalancesLatestRetrieveApiResponse,
@@ -334,7 +334,7 @@ const injectedRtkApi = api
           method: "POST",
           body: queryArg.writeTransaction,
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
       transactionsRetrieve: build.query<
         TransactionsRetrieveApiResponse,
@@ -352,7 +352,7 @@ const injectedRtkApi = api
           method: "PUT",
           body: queryArg.writeTransaction,
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
       transactionsPartialUpdate: build.mutation<
         TransactionsPartialUpdateApiResponse,
@@ -363,7 +363,7 @@ const injectedRtkApi = api
           method: "PATCH",
           body: queryArg.patchedWriteTransaction,
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
       transactionsDestroy: build.mutation<
         TransactionsDestroyApiResponse,
@@ -373,7 +373,7 @@ const injectedRtkApi = api
           url: `/api/transactions/${queryArg.id}/`,
           method: "DELETE",
         }),
-        invalidatesTags: ["transactions"],
+        invalidatesTags: ["transactions", "accounts"],
       }),
     }),
     overrideExisting: false,
@@ -420,6 +420,7 @@ export type AccountsImportTransactionCreateApiArg = {
   /** A unique integer value identifying this Account. */
   id: number;
   body: {
+    /** Transaction file to import. Accepted formats: .csv, .xlsx */
     file?: Blob;
   };
 };
@@ -518,7 +519,7 @@ export type ProfilePartialUpdateApiResponse =
 export type ProfilePartialUpdateApiArg = {
   patchedUserProfile: PatchedUserProfile;
 };
-export type RegisterCreateApiResponse = /** status 201  */ RegisterResponseRead;
+export type RegisterCreateApiResponse = /** status 201  */ UserRead;
 export type RegisterCreateApiArg = {
   user: UserWrite;
 };
@@ -542,7 +543,7 @@ export type TransactionsListApiArg = {
   description?: string;
   isSystem?: boolean;
   /** Ordering
-
+    
     * `type` - Type
     * `-type` - Type (descending)
     * `amount` - Amount
@@ -624,7 +625,6 @@ export type Account = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
-  credit_limit?: string | null;
   is_active?: boolean;
 };
 export type AccountRead = {
@@ -633,7 +633,7 @@ export type AccountRead = {
   type: AccountTypeEnum;
   category: CategoryEnum;
   currency: CurrencyEnum;
-  credit_limit?: string | null;
+  credit_limit: string | null;
   latest_balance: string;
   is_active?: boolean;
   created_at: string;
@@ -765,6 +765,7 @@ export type UserProfileRead = {
   id: number;
   email: string;
   name: string;
+  is_verified: boolean;
 };
 export type PatchedUserProfile = {
   name?: string;
@@ -773,6 +774,7 @@ export type PatchedUserProfileRead = {
   id?: number;
   email?: string;
   name?: string;
+  is_verified?: boolean;
 };
 export type User = {
   name: string;
@@ -787,21 +789,6 @@ export type UserWrite = {
   name: string;
   password: string;
   email: string;
-};
-export type RegisterResponse = {
-  user: User;
-  access: string;
-  refresh: string;
-};
-export type RegisterResponseRead = {
-  user: UserRead;
-  access: string;
-  refresh: string;
-};
-export type RegisterResponseWrite = {
-  user: UserWrite;
-  access: string;
-  refresh: string;
 };
 export type TokenObtainPair = {};
 export type TokenObtainPairRead = {
