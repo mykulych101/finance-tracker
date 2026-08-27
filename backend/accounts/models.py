@@ -1,8 +1,15 @@
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.db import models
 
 from accounts.constants import AccountCategory, AccountCurrency, AccountType
 from accounts.managers import AccountManager
+
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
+
+    from balances.models import BalanceRecord
 
 
 class Account(models.Model):
@@ -17,6 +24,8 @@ class Account(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = AccountManager()
+    if TYPE_CHECKING:
+        balance_records: RelatedManager[BalanceRecord]
 
     class Meta:
         ordering = ["-created_at"]

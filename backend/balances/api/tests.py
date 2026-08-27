@@ -381,7 +381,7 @@ class BalanceRecordTests(BaseAPITest):
             if br.date == balance_record.date:
                 self.assertEqual(br.amount, specified_amount)
             elif br.date > balance_record.date:
-                self.assertEqual(br.amount, amount_before + propagation_delta)
+                self.assertEqual(br.amount, (amount_before or 0) + propagation_delta)
             else:
                 self.assertEqual(br.amount, amount_before)
 

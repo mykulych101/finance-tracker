@@ -65,9 +65,8 @@ class CustomClient(APIClient):
 
 
 class BaseTestCase:
-    client_class: CustomClient = CustomClient
+    client_class: type[APIClient] = CustomClient
     user = None
-    client: CustomClient = None
 
 
 class BaseAPITest(BaseTestCase, APITestCase):
@@ -101,7 +100,7 @@ class VerifiedPermissionTestMixin:
     app carries its own copy of these three assertions.
     """
 
-    gated_url_name: str = None
+    gated_url_name = None
 
     def gated_url(self):
         return reverse(self.gated_url_name)
