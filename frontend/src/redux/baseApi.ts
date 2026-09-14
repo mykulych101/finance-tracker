@@ -64,6 +64,7 @@ const tokenRefreshFetchBase: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQ
     } else {
       // refresh token invalid, force logout/login
       api.dispatch(logout())
+      api.dispatch(baseApi.util.resetApiState())
     }
   }
   return result

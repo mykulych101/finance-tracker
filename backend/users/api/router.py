@@ -4,6 +4,7 @@ from users.api import views
 
 api_urlpatterns = [
     path("register/", views.RegisterView.as_view(), name="register"),
+    path("register/resend/", views.ResendActivationView.as_view(), name="register-resend"),
     path("login/", views.LoginView.as_view(), name="login"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("change-password/", views.ChangePasswordView.as_view(), name="change-password"),

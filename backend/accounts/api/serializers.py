@@ -20,17 +20,21 @@ class AccountWithBalanceSerializer(AccountSlimSerializer):
     class Meta(AccountSlimSerializer.Meta):
         fields = ("id", "name", "latest_balance")
 
+    def _convert(self, amount, currency):
+        convert_to = self.context.get("convert_to")
+        if convert_to and amount:
+            amount = convert_amount(amount, currency, convert_to, self.context["rates"])
+        field = serializers.DecimalField(max_digits=12, decimal_places=2)
+        return field.to_representation(Decimal(str(amount)))
+
     @extend_schema_field(serializers.DecimalField(max_digits=12, decimal_places=2))
     def get_latest_balance(self, obj):
-        balance = obj.latest_balance or 0
-        convert_to = self.context.get("convert_to")
-        if convert_to and balance:
-            balance = convert_amount(balance, obj.currency, convert_to, self.context["rates"])
-        field = serializers.DecimalField(max_digits=12, decimal_places=2)
-        return field.to_representation(Decimal(str(balance)))
+        return self._convert(getattr(obj, "latest_balance", None) or 0, obj.currency)
 
 
 class AccountSerializer(AccountWithBalanceSerializer):
+    credit_limit = serializers.SerializerMethodField()
+
     class Meta(AccountWithBalanceSerializer.Meta):
         fields = (
             "id",
@@ -45,10 +49,30 @@ class AccountSerializer(AccountWithBalanceSerializer):
             "updated_at",
         )
 
+    @extend_schema_field(serializers.DecimalField(max_digits=12, decimal_places=2, allow_null=True))
+    def get_credit_limit(self, obj):
+        if obj.credit_limit is None:
+            return None
+        field = serializers.DecimalField(max_digits=12, decimal_places=2)
+        return field.to_representation(obj.credit_limit)
+
 
 class WriteAccountSerializer(AccountSerializer):
+    credit_limit = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+
     class Meta(AccountSerializer.Meta):
-        fields = ("name", "type", "category", "currency", "credit_limit")
+        fields = (
+            "id",
+            "name",
+            "type",
+            "category",
+            "currency",
+            "credit_limit",
+            "latest_balance",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
         read_only_fields = ("id", "latest_balance", "created_at", "updated_at", "is_active")
 
     def create(self, validated_data):

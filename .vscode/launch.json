@@ -42,8 +42,7 @@
 			"justMyCode": false,
 			"name": "be sync",
 			"program": "${workspaceFolder}/backend/manage.py",
-			// "python": "${workspaceFolder}/backend/.venv/bin/python",
-			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"python": "${workspaceFolder}/backend/.venv/bin/python",
 			"request": "launch",
 			"type": "debugpy"
 		},
@@ -56,8 +55,7 @@
 			"justMyCode": true,
 			"module": "celery",
 			"name": "celery beat",
-			// "python": "${workspaceFolder}/backend/.venv/bin/python",
-			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"python": "${workspaceFolder}/backend/.venv/bin/python",
 			"request": "launch",
 			"type": "debugpy"
 		},
@@ -69,8 +67,7 @@
 			"justMyCode": true,
 			"module": "celery",
 			"name": "celery worker",
-			// "python": "${workspaceFolder}/backend/.venv/bin/python",
-			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"python": "${workspaceFolder}/backend/.venv/bin/python",
 			"request": "launch",
 			"type": "debugpy"
 		},
@@ -82,8 +79,7 @@
 			"justMyCode": true,
 			"module": "celery",
 			"name": "flower",
-			// "python": "${workspaceFolder}/backend/.venv/bin/python",
-			"python": "/Users/vadymmykulych/Library/Caches/pypoetry/virtualenvs/finance-tracker-OJnOMDmd-py3.12/bin/python",
+			"python": "${workspaceFolder}/backend/.venv/bin/python",
 			"request": "launch",
 			"type": "debugpy"
 		}

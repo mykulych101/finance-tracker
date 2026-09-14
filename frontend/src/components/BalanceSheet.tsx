@@ -46,6 +46,11 @@ const AccountSection = ({ title, accounts, total, type, isDestroying, setEditing
                     }`}>
                     {account.latest_balance} {currencyLabel(convertTo ?? account.currency)}
                   </span>
+                  {category === 'credit_card' && account.credit_limit && (
+                    <span className="mr-2 text-sm text-gray-500 dark:text-neutral-400">
+                      of {account.credit_limit} {currencyLabel(convertTo ?? account.currency)}
+                    </span>
+                  )}
                   <button
                     onClick={() => setEditingAccount(account)}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"

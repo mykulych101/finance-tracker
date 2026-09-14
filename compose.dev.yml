@@ -3,7 +3,7 @@ x-django-common: &django-common
   depends_on:
     - postgres
     - redis
-    - mailhog
+    - mailpit
   volumes:
     - ./backend:/opt/project/backend:cached
     - /opt/project/backend/.venv
@@ -29,7 +29,7 @@ services:
       - django
       - postgres
       - redis
-      - mailhog
+      - mailpit
     command: celery-dev worker -l INFO
     healthcheck:
       test: ["CMD-SHELL", "celery -A config inspect ping -d celery@$$HOSTNAME"]
@@ -43,7 +43,7 @@ services:
       - django
       - postgres
       - redis
-      - mailhog
+      - mailpit
     command: celery-dev beat -l INFO
   flower:
     image: mher/flower:0.9.7
@@ -77,13 +77,13 @@ services:
       - "5432:5432"
     env_file:
       - ./.env
-  mailhog:
-    image: mailhog/mailhog
+  mailpit:
+    image: axllent/mailpit
     logging:
       driver: 'none'
     ports:
-      - "1025:1025"
       - "8025:8025"
+      - "1025:1025"
   mkdocs:
     build:
       context: .

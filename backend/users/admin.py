@@ -75,19 +75,16 @@ class UserAdmin(BaseUserAdmin):
             *super().get_urls(),
         ]
 
+    @admin.action(description=_("Activate"))
     def activate(self, request, queryset):
         queryset.update(is_active=True)
 
-    activate.short_description = _("Activate")
-
+    @admin.action(description=_("Deactivate"))
     def deactivate(self, request, queryset):
         queryset.update(is_active=False)
 
-    deactivate.short_description = _("Deactivate")
-
+    @admin.action(description=_("Set unusable password"))
     def set_unusable_password(self, request, queryset):
         for q in queryset:
             q.set_unusable_password()
             q.save()
-
-    set_unusable_password.short_description = _("Set unusable password")

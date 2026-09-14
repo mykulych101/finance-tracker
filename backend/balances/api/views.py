@@ -2,7 +2,6 @@ from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -15,7 +14,6 @@ class BalanceRecordViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin, GenericViewSet
 ):
     serializer_class = BalanceRecordSerializer
-    permission_classes = [IsAuthenticated]
     queryset = BalanceRecord.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = BalanceRecordFilters
@@ -30,6 +28,7 @@ class BalanceRecordViewSet(
         )
 
     @extend_schema(
+        tags=["balances", "accounts"],
         request=BalanceRecordSerializer(many=True),
         responses={201: None},
         description="Bulk create balance records.",

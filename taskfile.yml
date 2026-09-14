@@ -34,7 +34,7 @@ tasks:
   dev.up:
     desc: "Start dev dependencies"
     cmds:
-      - docker compose -f compose.dev.yml up postgres redis mailhog --wait
+      - docker compose -f compose.dev.yml up postgres redis mailpit --wait
       - docker compose -f compose.dev.yml exec -it redis redis-cli FLUSHALL
   dev.down:
     desc: "Stop dev dependencies"
@@ -90,3 +90,20 @@ tasks:
     cmds:
       - poetry run python manage.py admin_generator {{.CLI_ARGS}} > {{.CLI_ARGS}}/admin.py
       - poetry run ruff check {{.CLI_ARGS}}/admin.py --fix --unsafe-fixes
+  dev.install:
+    desc: Install Frontend and Backend dependencies
+    deps:
+      - dev.install.be
+      - dev.install.fe
+    cmds:
+      - prek install --overwrite
+  dev.install.be:
+    dir: backend
+    cmds:
+      - poetry install --all-groups
+    silent: true
+  dev.install.fe:
+    dir: frontend
+    cmds:
+      - yarn install
+    silent: true
