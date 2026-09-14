@@ -29,7 +29,7 @@ class AccountWithBalanceSerializer(AccountSlimSerializer):
 
     @extend_schema_field(serializers.DecimalField(max_digits=12, decimal_places=2))
     def get_latest_balance(self, obj):
-        return self._convert(obj.latest_balance or 0, obj.currency)
+        return self._convert(getattr(obj, "latest_balance", None) or 0, obj.currency)
 
 
 class AccountSerializer(AccountWithBalanceSerializer):
@@ -53,14 +53,26 @@ class AccountSerializer(AccountWithBalanceSerializer):
     def get_credit_limit(self, obj):
         if obj.credit_limit is None:
             return None
-        return self._convert(obj.credit_limit, obj.currency)
+        field = serializers.DecimalField(max_digits=12, decimal_places=2)
+        return field.to_representation(obj.credit_limit)
 
 
 class WriteAccountSerializer(AccountSerializer):
     credit_limit = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
 
     class Meta(AccountSerializer.Meta):
-        fields = ("name", "type", "category", "currency", "credit_limit")
+        fields = (
+            "id",
+            "name",
+            "type",
+            "category",
+            "currency",
+            "credit_limit",
+            "latest_balance",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
         read_only_fields = ("id", "latest_balance", "created_at", "updated_at", "is_active")
 
     def create(self, validated_data):

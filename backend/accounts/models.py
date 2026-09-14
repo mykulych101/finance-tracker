@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from django.conf import settings
 from django.db import models
@@ -23,7 +23,7 @@ class Account(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = AccountManager()
+    objects: ClassVar[AccountManager] = AccountManager()
     if TYPE_CHECKING:
         balance_records: RelatedManager[BalanceRecord]
 

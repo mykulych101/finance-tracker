@@ -55,6 +55,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "email", "is_verified")
 
 
+class ResendActivationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)

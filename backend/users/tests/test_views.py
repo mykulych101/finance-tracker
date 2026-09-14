@@ -235,6 +235,51 @@ class ActivateAccountViewTests(APITestCase):
         self.assertFalse(self.user.is_verified)
 
 
+class ResendActivationViewTests(APITestCase):
+    def setUp(self):
+        self.url = reverse("users_api:register-resend")
+        self.user = User.objects.create_user(email="john@example.com", name="John Doe", password="supersecret1")
+
+    @patch("users.api.views.send_email.delay")
+    def test_resend_sends_email_for_unverified_user(self, mock_send_email):
+        response = self.client.post(self.url, {"email": "john@example.com"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_email.assert_called_once()
+        kwargs = mock_send_email.call_args.kwargs
+        self.assertEqual(kwargs["recipients"], [self.user.email])
+        self.assertEqual(kwargs["context"]["activation_link"], build_activation_url(self.user))
+
+    @patch("users.api.views.send_email.delay")
+    def test_resend_is_case_insensitive(self, mock_send_email):
+        response = self.client.post(self.url, {"email": "JOHN@EXAMPLE.COM"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_email.assert_called_once()
+
+    @patch("users.api.views.send_email.delay")
+    def test_resend_does_not_email_verified_user(self, mock_send_email):
+        self.user.is_verified = True
+        self.user.save()
+
+        response = self.client.post(self.url, {"email": "john@example.com"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_email.assert_not_called()
+
+    @patch("users.api.views.send_email.delay")
+    def test_resend_does_not_leak_unknown_email(self, mock_send_email):
+        response = self.client.post(self.url, {"email": "unknown@example.com"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_email.assert_not_called()
+
+    def test_resend_rejects_invalid_email(self):
+        response = self.client.post(self.url, {"email": "not-an-email"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
 class UserProfileViewTests(APITestCase):
     def setUp(self):
         self.url = reverse("users_api:profile")
@@ -321,6 +366,15 @@ class VerifiedPermissionTests(APITestCase):
         response = self.client.post(
             reverse("users_api:login"),
             {"email": "john@example.com", "password": "supersecret1"},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @patch("users.api.views.send_email.delay")
+    def test_resend_activation_stays_public(self, mock_send_email):
+        response = self.client.post(
+            reverse("users_api:register-resend"),
+            {"email": "john@example.com"},
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

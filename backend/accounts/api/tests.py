@@ -132,7 +132,7 @@ class AccountTests(BaseAPITest):
         self.assertEqual(account["id"], eur_account.id)
         self.assertEqual(Decimal(account["latest_balance"]), Decimal("115.34"))
 
-    def test_convert_credit_limit_uan_usd(self):
+    def test_credit_limit_not_converted_with_convert_to(self):
         with patch("accounts.api.views.get_exchange_rates", return_value=MOCK_RATES):
             uan_account = AccountFactory.create(
                 user=self.user,
@@ -146,7 +146,7 @@ class AccountTests(BaseAPITest):
         self.assertEqual(resp.status_code, 200)
         account = resp.data["results"][0]
         self.assertEqual(account["id"], uan_account.id)
-        self.assertEqual(Decimal(account["credit_limit"]), Decimal("225.05"))
+        self.assertEqual(Decimal(account["credit_limit"]), Decimal("10000.00"))
 
     def test_convert_latest_balance_no_rates_returns_503(self):
         with patch("accounts.api.views.get_exchange_rates", return_value=[]):

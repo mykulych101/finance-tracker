@@ -5,6 +5,7 @@ from rest_framework import generics, status
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -19,6 +20,7 @@ from .serializers import (
     LoginResponseSerializer,
     LogoutSerializer,
     MyTokenObtainPairSerializer,
+    ResendActivationSerializer,
     UserProfileSerializer,
     UserSerializer,
 )
@@ -51,6 +53,39 @@ class RegisterView(generics.CreateAPIView):
             recipients=[user.email],
             context={"user_name": user.name, "activation_link": build_activation_url(user)},
         )
+
+
+@extend_schema(
+    tags=["authentication"],
+    request=ResendActivationSerializer,
+    responses={200: OpenApiResponse(description="Activation email resent if the account exists")},
+)
+class ResendActivationView(APIView):
+    """Re-issue the activation email for an unverified account.
+
+    Always answers 200 with the same generic message, whether or not the
+    email belongs to an account, so the endpoint can't be used to enumerate
+    registered addresses.
+    """
+
+    permission_classes = (AllowAny,)
+    throttle_classes = (ScopedRateThrottle,)
+    throttle_scope = "resend-activation"
+
+    def post(self, request):
+        serializer = ResendActivationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.filter(email__iexact=serializer.validated_data["email"], is_verified=False).first()
+        if user:
+            send_email.delay(
+                subject="Activate your account",
+                template="email/activation_email.html",
+                recipients=[user.email],
+                context={"user_name": user.name, "activation_link": build_activation_url(user)},
+            )
+
+        return Response({"detail": "If the account exists, an activation email has been sent."})
 
 
 @extend_schema(

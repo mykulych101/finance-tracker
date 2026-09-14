@@ -25,6 +25,7 @@
         "uidb64",
         "paginators",
         "resends",
-        "pyrefly"
+        "pyrefly",
+        "mailpit"
     ]
 }
