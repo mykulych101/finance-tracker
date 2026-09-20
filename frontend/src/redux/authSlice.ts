@@ -21,13 +21,6 @@ const initialState: AuthState = {
 }
 export const authSlice = createSlice({
   extraReducers: (builder) => {
-    builder.addMatcher(backendApi.endpoints.registerCreate.matchFulfilled, (state, { payload }) => {
-      state.access = payload.access
-      state.refresh = payload.refresh
-      state.isAuthenticated = true
-      localStorage.setItem('access', payload.access)
-      localStorage.setItem('refresh', payload.refresh)
-    })
     builder.addMatcher(backendApi.endpoints.loginCreate.matchFulfilled, (state, { payload }) => {
       state.access = payload.access
       state.refresh = payload.refresh
@@ -62,6 +55,7 @@ export const authSlice = createSlice({
       localStorage.removeItem('refresh')
       localStorage.removeItem('userId')
       state.access = null
+      state.refresh = null
       state.isAuthenticated = false
       state.user = null
       state.userId = null

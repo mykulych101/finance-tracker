@@ -3,7 +3,7 @@
 // import { useFinance } from '@/context/FinanceContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useForm } from 'react-hook-form';
-import { Account, useAccountsCreateMutation } from '@/redux/api';
+import { WriteAccount, useAccountsCreateMutation } from '@/redux/api';
 import { ACCOUNT_TYPES, ACCOUNT_CATEGORIES, CURRENCY_OPTIONS } from '@/constants/financeConstants';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 export const AddAccountForm = () => {
   const { trackEvent } = useAnalytics();
   const [addAccount, { isLoading }] = useAccountsCreateMutation();
-  const { register, handleSubmit, watch, reset, setValue } = useForm<Account>()
+  const { register, handleSubmit, watch, reset, setValue } = useForm<WriteAccount>()
   const selectedType = watch('type', 'asset')
   const selectedCategory = watch('category')
 
@@ -19,7 +19,7 @@ export const AddAccountForm = () => {
     setValue('category', ACCOUNT_CATEGORIES[selectedType][0]);
   }, [selectedType, setValue]);
 
-  const onSubmit = (values: Account) => {
+  const onSubmit = (values: WriteAccount) => {
     addAccount({
       writeAccount: values
     }).unwrap()

@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.db import models
 
 from accounts.models import Account
@@ -12,7 +14,7 @@ class BalanceRecord(models.Model):
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    objects = BalanceRecordManager()
+    objects: ClassVar[BalanceRecordManager] = BalanceRecordManager()
 
     class Meta:
         ordering = ["-date", "-created_at"]

@@ -7,7 +7,9 @@ from users.models import User
 
 class UserProfileTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email="testuser@example.com", password="testpass123", name="Test User")
+        self.user = User.objects.create_user(
+            email="testuser@example.com", password="test-pass123", name="Test User", is_verified=True
+        )
         self.url = reverse("users_api:profile")
         self.client.force_authenticate(user=self.user)
 

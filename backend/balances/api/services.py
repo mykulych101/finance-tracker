@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models import Q, Sum
 
 from accounts.models import Account
@@ -10,7 +12,7 @@ def recalculate_balance_on_date(account: Account, date) -> None:
     previous_balance_record = (
         BalanceRecord.objects.select_for_update().filter(account=account, date__lt=date).order_by("-date").first()
     )
-    previous_amount = previous_balance_record.amount if previous_balance_record else 0
+    previous_amount = previous_balance_record.amount if previous_balance_record else Decimal(0)
 
     balance_record = BalanceRecord.objects.select_for_update().filter(account=account, date=date).first()
 
@@ -18,7 +20,7 @@ def recalculate_balance_on_date(account: Account, date) -> None:
         income=Sum("amount", filter=Q(type=TransactionType.INCOME)),
         expense=Sum("amount", filter=Q(type=TransactionType.EXPENSE)),
     )
-    date_amount = previous_amount + (calculated["income"] or 0) - (calculated["expense"] or 0)
+    date_amount = previous_amount + (calculated["income"] or Decimal(0)) - (calculated["expense"] or Decimal(0))
 
     if balance_record:
         balance_record.amount = date_amount

@@ -366,6 +366,42 @@
         "decorators": ""
     },
     {
+        "url": "/superadmin/transactions/transactionimport/",
+        "module": "django.contrib.admin.options.changelist_view",
+        "name": "admin:transactions_transactionimport_changelist",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/transactions/transactionimport/add/",
+        "module": "django.contrib.admin.options.add_view",
+        "name": "admin:transactions_transactionimport_add",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/transactions/transactionimport/<path:object_id>/history/",
+        "module": "django.contrib.admin.options.history_view",
+        "name": "admin:transactions_transactionimport_history",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/transactions/transactionimport/<path:object_id>/delete/",
+        "module": "django.contrib.admin.options.delete_view",
+        "name": "admin:transactions_transactionimport_delete",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/transactions/transactionimport/<path:object_id>/change/",
+        "module": "django.contrib.admin.options.change_view",
+        "name": "admin:transactions_transactionimport_change",
+        "decorators": ""
+    },
+    {
+        "url": "/superadmin/transactions/transactionimport/<path:object_id>/",
+        "module": "django.views.generic.base.RedirectView",
+        "name": "",
+        "decorators": ""
+    },
+    {
         "url": "/superadmin/integrations/exchangerate/",
         "module": "django.contrib.admin.options.changelist_view",
         "name": "admin:integrations_exchangerate_changelist",

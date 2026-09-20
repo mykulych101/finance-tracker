@@ -1,4 +1,6 @@
 from django.db.models import TextChoices
+from django.urls import reverse
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient, APITestCase
 from rest_framework_simplejwt.settings import api_settings
@@ -63,20 +65,20 @@ class CustomClient(APIClient):
 
 
 class BaseTestCase:
-    client_class: CustomClient = CustomClient
+    client_class: type[APIClient] = CustomClient
     user = None
-    client: CustomClient = None
 
 
 class BaseAPITest(BaseTestCase, APITestCase):
-    def create(self, email="test@mail.com", password="qwerty123456", name="John Snow"):  # noqa: S107
+    def create(self, email="test@mail.com", password="qwerty123456", name="John Snow", is_verified=True):  # noqa: S107
         user: User = User.objects.create_user(
             email=email,
             password=password,
             name=name,
         )
         user.is_active = True
-        user.save(update_fields=["is_active"])
+        user.is_verified = is_verified
+        user.save(update_fields=["is_active", "is_verified"])
 
         return user
 
@@ -88,3 +90,37 @@ class BaseAPITest(BaseTestCase, APITestCase):
     def authorize(self, user, **additional_headers):
         token = AccessToken.for_user(user)
         self.client.credentials(HTTP_AUTHORIZATION=f"{api_settings.AUTH_HEADER_TYPES[0]} {token}", **additional_headers)
+
+
+class VerifiedPermissionTestMixin:
+    """Assert one endpoint of an app sits behind the `IsVerified` default.
+
+    Mixed into every app's own test module on purpose. A single shared test
+    would keep passing if one app quietly slipped back to `AllowAny`, so each
+    app carries its own copy of these three assertions.
+    """
+
+    gated_url_name = None
+
+    def gated_url(self):
+        return reverse(self.gated_url_name)
+
+    def test_verified_user_passes_the_gate(self):
+        self.create_and_login()
+
+        response = self.client.get(self.gated_url())
+
+        self.assertNotIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+
+    def test_unverified_user_is_rejected(self):
+        self.authorize(self.create(is_verified=False))
+
+        response = self.client.get(self.gated_url())
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(str(response.data["detail"]), "Email is not verified.")
+
+    def test_anonymous_user_is_rejected(self):
+        response = self.client.get(self.gated_url())
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

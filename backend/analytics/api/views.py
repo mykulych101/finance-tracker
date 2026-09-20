@@ -4,7 +4,6 @@ from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -33,7 +32,6 @@ from integrations.monobank.service import get_exchange_rates
 )
 class AnalyticsViewSet(GenericViewSet):
     filter_backends = (filters.DjangoFilterBackend,)
-    permission_classes = [IsAuthenticated]
     pagination_class = None
 
     def get_serializer_class(self):

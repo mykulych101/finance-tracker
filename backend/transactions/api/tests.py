@@ -8,7 +8,7 @@ from django.utils import timezone
 from accounts.api.factories import AccountFactory
 from balances.api.factories import BalanceRecordFactory
 from balances.models import BalanceRecord
-from core.api.tests import BaseAPITest
+from core.api.tests import BaseAPITest, VerifiedPermissionTestMixin
 from transactions.api.factories import TransactionFactory
 from transactions.constants import TransactionType
 from transactions.models import Transaction
@@ -47,6 +47,15 @@ class TransactionTests(BaseAPITest):
         }
         for field in required_fields:
             self.assertIn(field, transaction)
+
+    def test_retrieve_non_active_account(self):
+        transactions_count = 5
+        non_active_account = AccountFactory.create(user=self.user, is_active=False)
+        TransactionFactory.create_batch(transactions_count, account=non_active_account)
+        self.assertEqual(Transaction.objects.count(), transactions_count)
+        resp = self.client.get(self.list_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 0)
 
     def test_order_by_amount(self):
         TransactionFactory.create(
@@ -117,6 +126,7 @@ class TransactionTests(BaseAPITest):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(Transaction.objects.count(), 1)
         transaction = Transaction.objects.first()
+        self.assertIsNotNone(transaction)
         self._assert_transaction_fields(transaction, data)
         self._assert_balance_records_amounts(transaction, balance_records_before)
 
@@ -157,6 +167,7 @@ class TransactionTests(BaseAPITest):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(Transaction.objects.count(), transactions_count + 1)
         transaction = Transaction.objects.filter(raw_category="Test").first()
+        self.assertIsNotNone(transaction)
         self._assert_transaction_fields(transaction, data)
         self._assert_balance_records_amounts(transaction, balance_records_before)
 
@@ -183,6 +194,7 @@ class TransactionTests(BaseAPITest):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(Transaction.objects.count(), 1)
         transaction = Transaction.objects.first()
+        self.assertIsNotNone(transaction)
         self._assert_transaction_fields(transaction, data)
         self._assert_balance_records_amounts(transaction, balance_records_before)
 
@@ -205,6 +217,7 @@ class TransactionTests(BaseAPITest):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(Transaction.objects.count(), 1)
         transaction = Transaction.objects.first()
+        self.assertIsNotNone(transaction)
         self._assert_transaction_fields(transaction, data)
         self._assert_balance_records_amounts(transaction, balance_records_before)
 
@@ -221,6 +234,7 @@ class TransactionTests(BaseAPITest):
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(Transaction.objects.count(), 1)
         transaction = Transaction.objects.first()
+        self.assertIsNotNone(transaction)
         self._assert_transaction_fields(transaction, data)
         balance_record = BalanceRecord.objects.filter(account=self.account, date=transaction.date).first()
         self.assertIsNotNone(balance_record)
@@ -533,6 +547,10 @@ class TransactionTests(BaseAPITest):
         for t in resp.data["results"]:
             self.assertEqual(t["account"]["id"], self.account.id)
 
+        resp = self.client.get(f"{self.list_url}?account={self.account.id},{another_account.id}")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["count"], 5)
+
     def test_filter_by_type(self):
         TransactionFactory.create_batch(3, account=self.account, type=TransactionType.INCOME)
         TransactionFactory.create_batch(2, account=self.account, type=TransactionType.EXPENSE)
@@ -601,7 +619,8 @@ class TransactionTests(BaseAPITest):
             balance_record_amount_before = balance_records_before.get(balance_record.id)
 
             if balance_record.date >= transaction.date:
-                if balance_record.date == transaction.date and balance_record_amount_before is None:
+                if balance_record_amount_before is None:
+                    self.assertEqual(balance_record.date, transaction.date)
                     previous_balance_record = (
                         BalanceRecord.objects.filter(account=transaction.account, date__lt=transaction.date)
                         .order_by("-date")
@@ -625,3 +644,7 @@ class TransactionTests(BaseAPITest):
             else:
                 expected_amount = balance_record_amount_before
             self.assertEqual(balance_record.amount, expected_amount)
+
+
+class TransactionVerifiedPermissionTests(VerifiedPermissionTestMixin, BaseAPITest):
+    gated_url_name = "transactions-list"
